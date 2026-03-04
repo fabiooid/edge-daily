@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import Breadcrumbs from './Breadcrumbs';
 import './Archive.css';
 
 function Archive() {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [selectedTheme, setSelectedTheme] = useState('All');
@@ -45,6 +47,18 @@ function Archive() {
 
   return (
     <div className="archive">
+      <Breadcrumbs 
+        items={[
+          { label: 'Home', page: 'home' },
+          { label: 'Archive', page: null }
+        ]}
+        onNavigate={(page) => {
+          if (page === 'home') {
+            navigate('/');
+          }
+        }}
+      />
+
       <h1 className="archive-title">Archive</h1>
       
       <div className="theme-filters">
