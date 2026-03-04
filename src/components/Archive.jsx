@@ -85,7 +85,7 @@ function Archive() {
           filteredPosts.map(post => (
             <Link 
               key={post.id} 
-              to={`/post/${post.id}`} 
+              to={`/post/${post.slug}`} 
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <div className="post-card">

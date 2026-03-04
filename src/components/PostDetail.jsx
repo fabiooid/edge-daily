@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Breadcrumbs from './Breadcrumbs';
 import './PostDetail.css';
 
-function PostDetail({ postId, onBack, onNavigate }) {
+function PostDetail() {
+  const { slug } = useParams();
+  const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,19 +17,20 @@ function PostDetail({ postId, onBack, onNavigate }) {
   };
 
   useEffect(() => {
-    // For now, fetch all posts and find the one we need
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/posts/latest`) 
-      .then(res => res.json())
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/posts/${slug}`) 
+      .then(res => {
+        if (!res.ok) throw new Error('Post not found');
+        return res.json();
+      })
       .then(data => {
-        const foundPost = data.find(p => p.id === postId);
-        setPost(foundPost);
+        setPost(data);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching post:', err);
         setLoading(false);
       });
-  }, [postId]);
+  }, [slug]);
 
   if (loading) return <div className="post-detail">Loading...</div>;
   if (!post) return <div className="post-detail">Post not found</div>;
@@ -42,9 +46,9 @@ function PostDetail({ postId, onBack, onNavigate }) {
         ]}
         onNavigate={(page) => {
           if (page === 'home') {
-            onNavigate('home');
+            navigate('/');
           } else if (page === 'archive') {
-            onBack();
+            navigate('/archive');
           }
         }}
       />

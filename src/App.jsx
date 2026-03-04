@@ -1,24 +1,10 @@
-import { BrowserRouter, Routes, Route, Link, useNavigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import DailyPost from './components/DailyPost';
 import Archive from './components/Archive';
 import PostDetail from './components/PostDetail';
 import Logo from './components/Logo';
 import Footer from './components/Footer';
 import './App.css';
-
-// Wrapper component for PostDetail to handle routing
-function PostDetailWrapper() {
-  const { postId } = useParams();
-  const navigate = useNavigate();
-  
-  return (
-    <PostDetail 
-      postId={parseInt(postId)} 
-      onBack={() => navigate('/archive')}
-      onNavigate={(page) => navigate(page === 'archive' ? '/archive' : '/')}
-    />
-  );
-}
 
 function App() {
   return (
@@ -39,7 +25,7 @@ function App() {
         <Routes>
           <Route path="/" element={<DailyPost />} />
           <Route path="/archive" element={<Archive />} />
-          <Route path="/post/:postId" element={<PostDetailWrapper />} />
+          <Route path="/post/:slug" element={<PostDetail />} />
         </Routes>
         
         <Footer />
