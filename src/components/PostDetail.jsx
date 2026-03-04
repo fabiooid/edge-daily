@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Breadcrumbs from './Breadcrumbs';
+import Loading from './Loading';
 import './PostDetail.css';
 
 function PostDetail() {
@@ -32,7 +33,7 @@ function PostDetail() {
       });
   }, [slug]);
 
-  if (loading) return <div className="post-detail">Loading...</div>;
+  if (loading) return <Loading />;
   if (!post) return <div className="post-detail">Post not found</div>;
 
   return (

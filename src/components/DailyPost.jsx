@@ -1,5 +1,6 @@
 import './DailyPost.css'
 import { useEffect, useState } from 'react';
+import Loading from './Loading';
 
 function DailyPost() {
   const [post, setPost] = useState(null);
@@ -24,7 +25,7 @@ function DailyPost() {
       });
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Loading />;
   
   if (!post) return (
     <div className="daily-post">
@@ -35,7 +36,6 @@ function DailyPost() {
     </div>
   );
 
-  // Your existing JSX using post.title, post.content, etc.
   return (
     <div className="daily-post">
       <div className="post-header">

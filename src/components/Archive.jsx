@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Breadcrumbs from './Breadcrumbs';
+import Loading from './Loading';
 import './Archive.css';
 
 function Archive() {
@@ -43,7 +44,7 @@ function Archive() {
     }
   };
 
-  if (loading) return <div className="archive">Loading...</div>;
+  if (loading) return <Loading />;
 
   return (
     <div className="archive">
