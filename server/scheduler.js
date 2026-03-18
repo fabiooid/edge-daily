@@ -32,6 +32,30 @@ async function fetchApprovedSources() {
   return sources;
 }
 
+async function fetchAllDomains() {
+  const token = process.env.AIRTABLE_TOKEN;
+  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json();
+  return new Set(data.records.map(r => r.fields.Domain).filter(Boolean));
+}
+
+async function suggestNewSources(links, theme) {
+  const allDomains = await fetchAllDomains();
+  const token = process.env.AIRTABLE_TOKEN;
+  for (const link of links) {
+    const domain = new URL(link.url).hostname.replace('www.', '');
+    if (!allDomains.has(domain)) {
+      await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: { Domain: domain, Theme: [theme], Status: 'Pending', Notes: `Auto-suggested from post on ${new Date().toISOString().slice(0,10)}` } })
+      });
+      console.log(`💡 Suggested new source: ${domain} (Pending review)`);
+    }
+  }
+}
+
 async function validateLinks(links) {
   const results = await Promise.all(links.map(async (link) => {
     try {
@@ -173,6 +197,9 @@ async function generateAndSavePost() {
   console.log('\n✅ Post created with ID:', post.id);
   console.log('📝 Title:', title);
   console.log('🎯 Theme:', theme);
+
+  await suggestNewSources(links, theme);
+
   console.log('\nRefresh your browser to see it!');
 }
 
