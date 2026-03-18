@@ -115,7 +115,7 @@ function Archive() {
               <div className="post-card">
                 <span className="post-theme">{themeEmojis[post.theme]} {post.theme}</span>
                 <h2 className="post-card-title">{post.title}</h2>
-                <p className="post-card-date">{post.date}</p>
+                <p className="post-card-date">{post.date.split('-').reverse().join('-')}</p>
                 <p className="post-card-excerpt">
                   {post.content.substring(0, 150)}...
                 </p>
