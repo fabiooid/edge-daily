@@ -1,5 +1,6 @@
 // database.js
 import sqlite3 from 'sqlite3';
+import { randomBytes } from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -21,7 +22,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 // Helper function to generate random short code
 function generateSlug() {
-  return Math.random().toString(36).substring(2, 9);
+  return randomBytes(4).toString('hex');
 }
 
 // Helper function to regenerate all slugs
@@ -196,7 +197,7 @@ function getPostBySlug(slug) {
 // Get all posts
 function getAllPosts() {
   return new Promise((resolve, reject) => {
-    const sql = `SELECT * FROM posts ORDER BY date DESC`;
+    const sql = `SELECT * FROM posts ORDER BY date DESC LIMIT 500`;
     
     db.all(sql, (err, rows) => {
       if (err) reject(err);

@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { initializeDatabase, getLatestPost, getAllPosts, getPostBySlug } from './database.js';
 import { startScheduler } from './scheduler.js';
@@ -17,6 +18,15 @@ startScheduler();
 
 app.use(cors({ origin: process.env.FRONTEND_URL || 'https://edgedaily.vercel.app' }));
 app.use(express.json());
+app.use('/api/', rateLimit({ windowMs: 15 * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false }));
+
+const requireApiKey = (req, res, next) => {
+  if (req.headers['x-api-key'] !== process.env.ADMIN_API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+};
+export { requireApiKey };
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
