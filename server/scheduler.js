@@ -13,20 +13,23 @@ const anthropic = new Anthropic({
 const APPROVED_SOURCES = {
   AI: [
     'techcrunch.com', 'technologyreview.com', 'wired.com', 'theverge.com',
-    'venturebeat.com', 'nature.com', 'arxiv.org', 'openai.com',
-    'deepmind.google', 'anthropic.com', 'reuters.com', 'bloomberg.com'
+    'venturebeat.com', 'openai.com', 'deepmind.google', 'anthropic.com',
+    'reuters.com', 'bloomberg.com', 'ft.com', 'wsj.com', 'blog.google'
   ],
   Web3: [
     'coindesk.com', 'theblock.co', 'decrypt.co', 'ethereum.org',
-    'messari.io', 'wired.com', 'reuters.com', 'bloomberg.com', 'ft.com'
+    'messari.io', 'wired.com', 'reuters.com', 'bloomberg.com', 'ft.com',
+    'techcrunch.com', 'blog.coinbase.com'
   ],
   Fintech: [
     'ft.com', 'bloomberg.com', 'reuters.com', 'wsj.com',
-    'finextra.com', 'pymnts.com', 'techcrunch.com', 'wired.com'
+    'finextra.com', 'pymnts.com', 'techcrunch.com', 'wired.com',
+    'sifted.eu', 'thefinancialbrand.com'
   ],
   Energy: [
-    'reuters.com', 'bloomberg.com', 'iea.org', 'nature.com',
-    'carbonbrief.org', 'theguardian.com', 'wired.com', 'ft.com'
+    'reuters.com', 'bloomberg.com', 'carbonbrief.org', 'theguardian.com',
+    'wired.com', 'ft.com', 'wsj.com', 'techcrunch.com',
+    'technologyreview.com', 'electrek.co'
   ]
 };
 
