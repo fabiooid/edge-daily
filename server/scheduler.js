@@ -40,19 +40,24 @@ async function fetchAllDomains() {
   return new Set(data.records.map(r => r.fields.Domain).filter(Boolean));
 }
 
+const BLOCKLISTED_DOMAINS = ['google.com', 'twitter.com', 'x.com', 'facebook.com', 'linkedin.com', 'reddit.com', 'youtube.com', 'wikipedia.org'];
+
 async function suggestNewSources(links, theme) {
   const allDomains = await fetchAllDomains();
   const token = process.env.AIRTABLE_TOKEN;
+  let suggested = 0;
   for (const link of links) {
+    if (suggested >= 2) break;
     const domain = new URL(link.url).hostname.replace('www.', '');
-    if (!allDomains.has(domain)) {
-      await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fields: { Domain: domain, Theme: [theme], Status: 'Pending', Notes: `Auto-suggested from post on ${new Date().toISOString().slice(0,10)}` } })
-      });
-      console.log(`💡 Suggested new source: ${domain} (Pending review)`);
-    }
+    if (allDomains.has(domain)) continue;
+    if (BLOCKLISTED_DOMAINS.includes(domain)) continue;
+    await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: { Domain: domain, Theme: [theme], Status: 'Pending', Notes: `Auto-suggested from post on ${new Date().toISOString().slice(0,10)}` } })
+    });
+    console.log(`💡 Suggested new source: ${domain} (Pending review)`);
+    suggested++;
   }
 }
 
