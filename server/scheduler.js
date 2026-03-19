@@ -119,7 +119,7 @@ async function generateAndSavePost() {
     messages: [
       {
         role: 'user',
-        content: `Search for trending ${theme} topics from this week from online articles and news. Find a specific, newsworthy development that would interest someone learning about ${theme}.
+        content: `Search for trending ${theme} topics from this week from online articles and news. Find a specific, newsworthy development that would interest someone learning about ${theme}.${theme === 'Energy' ? ' Focus on energy technology: EVs, batteries, charging infrastructure, solar, wind, grid storage, and clean energy innovation. Think about what engineers and product people at companies like Tesla, Rivian, or utility-scale solar firms would want to read.' : ''}
 
         Write an educational article that explains this topic clearly and factually. Use simple language naturally without meta-commentary about the writing or audience. Explain concepts as if talking to an intelligent friend who's unfamiliar with the topic.
 
