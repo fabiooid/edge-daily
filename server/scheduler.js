@@ -83,8 +83,11 @@ async function validateLinks(links) {
 
   const failed = results.filter(r => !r.ok);
   if (failed.length > 0) {
-    const details = failed.map(r => `${r.link.url} → ${r.reason}`).join('\n');
-    throw new Error(`Link validation failed:\n${details}`);
+    console.warn(`⚠️ ${failed.length} link(s) failed validation (will still publish):`);
+    failed.forEach(r => console.warn(`  ${r.link.url} → ${r.reason}`));
+  }
+  if (failed.length === links.length) {
+    throw new Error('All links failed validation — aborting post');
   }
 }
 
