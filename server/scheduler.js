@@ -91,35 +91,12 @@ async function validateLinks(links) {
   }
 }
 
-async function generateAndSavePost() {
-  console.log('Generating daily post...\n');
-  
-  const theme = getTodaysTheme();
+function buildPrompt(theme, approvedSources) {
+  const sourceConstraint = approvedSources
+    ? `- ONLY use links from these reputable sources: ${approvedSources.join(', ')}\n        - Do not use any other domains\n        - If you cannot find 3 links from the approved sources for a topic, that topic is too niche — pick a different, broader ${theme} topic and try again until you find one with 3 approved sources`
+    : `- Use links from reputable industry publications, company blogs, or official documentation\n        - Avoid academic papers, government databases, social media, or Wikipedia`;
 
-  if (!theme) {
-    console.log('⏸️  No post scheduled for today.');
-    console.log('Posts are generated on: Monday (AI), Tuesday (Web3), Wednesday (Fintech), Thursday (Energy)');
-    return;
-  }
-
-  console.log(`📅 Today's theme: ${theme}\n`);
-
-  const APPROVED_SOURCES = await fetchApprovedSources();
-
-  const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 2048,
-    temperature: 0.7,
-    tools: [
-      {
-        type: "web_search_20250305",
-        name: "web_search"
-      }
-    ],
-    messages: [
-      {
-        role: 'user',
-        content: `Search for trending ${theme} topics from this week from online articles and news. Find a specific, newsworthy development that would interest someone learning about ${theme}.${theme === 'Energy' ? ' Focus on energy technology: EVs, batteries, charging infrastructure, solar, wind, grid storage, and clean energy innovation. Think about what engineers and product people at companies like Tesla, Rivian, or utility-scale solar firms would want to read.' : ''}
+  return `Search for trending ${theme} topics from this week from online articles and news. Find a specific, newsworthy development that would interest someone learning about ${theme}.${theme === 'Energy' ? ' Focus on energy technology: EVs, batteries, charging infrastructure, solar, wind, grid storage, and clean energy innovation. Think about what engineers and product people at companies like Tesla, Rivian, or utility-scale solar firms would want to read.' : ''}
 
         Write an educational article that explains this topic clearly and factually. Use simple language naturally without meta-commentary about the writing or audience. Explain concepts as if talking to an intelligent friend who's unfamiliar with the topic.
 
@@ -129,9 +106,7 @@ async function generateAndSavePost() {
         - NEVER create Google search links like "https://www.google.com/search?q=..."
         - Links must be to real articles, documentation, or resources you found
         - Each link should be highly relevant to the specific topic discussed
-        - ONLY use links from these reputable sources: ${APPROVED_SOURCES[theme].join(', ')}
-        - Do not use any other domains
-        - If you cannot find 3 links from the approved sources for a topic, that topic is too niche — pick a different, broader ${theme} topic and try again until you find one with 3 approved sources
+        ${sourceConstraint}
 
         IMPORTANT: Respond ONLY with the formatted post below. Do not include any commentary, explanations, or notes about your process.
 
@@ -141,66 +116,111 @@ async function generateAndSavePost() {
         LINKS:
         - [Actual article title from search results] [Actual URL from search results]
         - [Actual article title from search results] [Actual URL from search results]
-        - [Actual article title from search results] [Actual URL from search results]`
-      }
-    ],
+        - [Actual article title from search results] [Actual URL from search results]`;
+}
+
+function isApprovedDomain(url, approvedSources) {
+  try {
+    const domain = new URL(url).hostname.replace('www.', '');
+    return approvedSources.some(src => domain === src || domain.endsWith('.' + src));
+  } catch {
+    return false;
+  }
+}
+
+async function attemptGeneration(theme, approvedSources) {
+  const message = await anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 2048,
+    temperature: 0.7,
+    tools: [{ type: "web_search_20250305", name: "web_search" }],
+    messages: [{ role: 'user', content: buildPrompt(theme, approvedSources) }],
   });
 
-  // Extract text from response (handling tool use)
   let response = '';
   for (const block of message.content) {
-    if (block.type === 'text') {
-      response += block.text;
-    }
+    if (block.type === 'text') response += block.text;
   }
 
   console.log('Full response:\n', response);
 
-  // Parse title, content, and links
   const titleMatch = response.match(/TITLE: (.+)/);
   const contentMatch = response.match(/CONTENT: ([\s\S]+?)(?=LINKS:|$)/);
   const linksMatch = response.match(/LINKS:([\s\S]+)/);
 
   const title = titleMatch ? titleMatch[1].trim() : `Understanding ${theme}`;
-  let content = contentMatch ? contentMatch[1].trim() : response;
+  const content = contentMatch ? contentMatch[1].trim() : response;
 
-  // Parse links
   let links = [];
   if (linksMatch) {
-    const linksText = linksMatch[1];
-    const linkLines = linksText.split('\n').filter(line => line.trim().startsWith('-'));
-    
+    const linkLines = linksMatch[1].split('\n').filter(line => line.trim().startsWith('-'));
     links = linkLines.map(line => {
       const match = line.match(/- (.+?) (https?:\/\/.+)/);
-      if (match) {
-        return { title: match[1].trim(), url: match[2].trim() };
-      }
-      return null;
+      return match ? { title: match[1].trim(), url: match[2].trim() } : null;
     }).filter(Boolean);
   }
 
-  // Validate links - reject Google search URLs
   if (links.some(link => link.url.includes('google.com/search'))) {
-    console.error('❌ ERROR: Generated Google search links instead of real URLs');
-    console.log('Links found:', links);
     throw new Error('Invalid links generated - contains Google search URLs');
   }
-
-  // Require exactly 3 links
   if (links.length !== 3) {
-    console.error(`❌ ERROR: Expected 3 links, got ${links.length}`);
-    console.log('Links found:', links);
     throw new Error(`Invalid number of links: ${links.length}`);
   }
 
-  console.log('\n📎 Found', links.length, 'valid links');
+  return { title, content, links };
+}
 
-  // Validate all links are reachable
+async function generateAndSavePost() {
+  console.log('Generating daily post...\n');
+
+  const theme = getTodaysTheme();
+  if (!theme) {
+    console.log('⏸️  No post scheduled for today.');
+    return;
+  }
+
+  console.log(`📅 Today's theme: ${theme}\n`);
+
+  const APPROVED_SOURCES = await fetchApprovedSources();
+  const approvedList = APPROVED_SOURCES[theme];
+
+  let title, content, links;
+  let usedApprovedSources = true;
+
+  // Try up to 3 times with approved sources only
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    console.log(`🔄 Attempt ${attempt}/3 (approved sources only)...`);
+    try {
+      ({ title, content, links } = await attemptGeneration(theme, approvedList));
+
+      const unapproved = links.filter(l => !isApprovedDomain(l.url, approvedList));
+      if (unapproved.length > 0) {
+        console.warn(`⚠️ Attempt ${attempt}: unapproved domains used: ${unapproved.map(l => new URL(l.url).hostname).join(', ')}`);
+        throw new Error('Unapproved sources');
+      }
+
+      console.log('✅ All links from approved sources');
+      break;
+    } catch (err) {
+      console.warn(`⚠️ Attempt ${attempt} failed: ${err.message}`);
+      if (attempt === 3) {
+        // Final fallback — no source restriction
+        console.warn('⚠️ All approved-source attempts failed. Falling back to open sources...');
+        usedApprovedSources = false;
+        ({ title, content, links } = await attemptGeneration(theme, null));
+      }
+    }
+  }
+
+  console.log('\n📎 Found', links.length, 'valid links');
+  if (!usedApprovedSources) {
+    console.warn('⚠️ Post published using fallback (unapproved) sources — review Airtable');
+  }
+
   console.log('🔍 Validating links...');
   await validateLinks(links);
   console.log('✅ All links validated');
 
-  // Create the post in database
   const post = await createPost(
     theme,
     title,
@@ -208,7 +228,7 @@ async function generateAndSavePost() {
     links,
     new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Hong_Kong' })
   );
-  
+
   console.log('\n✅ Post created with ID:', post.id);
   console.log('📝 Title:', title);
   console.log('🎯 Theme:', theme);
