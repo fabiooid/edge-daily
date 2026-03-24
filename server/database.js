@@ -228,6 +228,16 @@ function updatePostLinks(slug, links) {
   });
 }
 
+// Update content for a post by slug
+function updatePostContent(slug, title, content) {
+  return new Promise((resolve, reject) => {
+    db.run('UPDATE posts SET title = ?, content = ? WHERE slug = ?', [title, content, slug], function(err) {
+      if (err) reject(err);
+      else resolve({ changes: this.changes });
+    });
+  });
+}
+
 export {
     initializeDatabase,
     createPost,
@@ -235,5 +245,6 @@ export {
     getPostBySlug,
     getAllPosts,
     getPostsByTheme,
-    updatePostLinks
+    updatePostLinks,
+    updatePostContent
 };
