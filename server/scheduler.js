@@ -91,12 +91,16 @@ async function validateLinks(links) {
   }
 }
 
-function buildPrompt(theme, approvedSources) {
+function buildPrompt(theme, approvedSources, excludeTopics = []) {
   const sourceConstraint = approvedSources
-    ? `- ONLY use links from these reputable sources: ${approvedSources.join(', ')}\n        - Do not use any other domains\n        - If you cannot find 3 links from the approved sources for a topic, that topic is too niche — pick a different, broader ${theme} topic and try again until you find one with 3 approved sources`
+    ? `- ONLY use links from these reputable sources: ${approvedSources.join(', ')}\n        - Do not use any other domains\n        - If you cannot find 3 links from the approved sources for a topic, DO NOT use unapproved sources — instead, abandon that topic and search for a completely different ${theme} story`
     : `- Use links from reputable industry publications, company blogs, or official documentation\n        - Avoid academic papers, government databases, social media, or Wikipedia`;
 
-  return `Search for trending ${theme} topics from this week from online articles and news. Find a specific, newsworthy development that would interest someone learning about ${theme}.${theme === 'Energy' ? ' Focus on energy technology: EVs, batteries, charging infrastructure, solar, wind, grid storage, and clean energy innovation. Think about what engineers and product people at companies like Tesla, Rivian, or utility-scale solar firms would want to read.' : ''}
+  const excludeClause = excludeTopics.length > 0
+    ? `\n        IMPORTANT: Do NOT write about the following topics that were already attempted: ${excludeTopics.join(', ')}. Find a different story.`
+    : '';
+
+  return `Search for trending ${theme} topics from this week from online articles and news. Find a specific, newsworthy development that would interest someone learning about ${theme}.${theme === 'Energy' ? ' Focus on energy technology: EVs, batteries, charging infrastructure, solar, wind, grid storage, and clean energy innovation. Think about what engineers and product people at companies like Tesla, Rivian, or utility-scale solar firms would want to read.' : ''}${excludeClause}
 
         Write for a reader who follows tech and business news but is not an expert. Assume basic familiarity. Write as a professional journalist from a news outlet like TechCrunch, Forbes, The Verge, or Wired. Write this as a tech news article. Never use em dashes (—).
 
@@ -132,13 +136,13 @@ async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function attemptGeneration(theme, approvedSources) {
+async function attemptGeneration(theme, approvedSources, excludeTopics = []) {
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 2048,
     temperature: 0.7,
     tools: [{ type: "web_search_20250305", name: "web_search" }],
-    messages: [{ role: 'user', content: buildPrompt(theme, approvedSources) }],
+    messages: [{ role: 'user', content: buildPrompt(theme, approvedSources, excludeTopics) }],
   });
 
   // Collect only the final text block (last one contains the formatted post)
@@ -173,6 +177,11 @@ async function attemptGeneration(theme, approvedSources) {
   return { title, content, links };
 }
 
+function extractTopic(title) {
+  // Extract a short topic description from the title to use as an exclude hint
+  return title ? title.split(':')[0].trim() : null;
+}
+
 export async function generateAndSavePost() {
   console.log('Generating daily post...\n');
 
@@ -189,16 +198,19 @@ export async function generateAndSavePost() {
 
   let title, content, links;
   let usedApprovedSources = true;
+  const excludeTopics = [];
 
   // Try up to 3 times with approved sources only
   for (let attempt = 1; attempt <= 3; attempt++) {
     console.log(`🔄 Attempt ${attempt}/3 (approved sources only)...`);
     try {
-      ({ title, content, links } = await attemptGeneration(theme, approvedList));
+      ({ title, content, links } = await attemptGeneration(theme, approvedList, excludeTopics));
 
       const unapproved = links.filter(l => !isApprovedDomain(l.url, approvedList));
       if (unapproved.length > 0) {
-        console.warn(`⚠️ Attempt ${attempt}: unapproved domains used: ${unapproved.map(l => new URL(l.url).hostname).join(', ')}`);
+        const topic = extractTopic(title);
+        if (topic) excludeTopics.push(topic);
+        console.warn(`⚠️ Attempt ${attempt}: unapproved domains used: ${unapproved.map(l => new URL(l.url).hostname).join(', ')}. Excluding topic: "${topic}"`);
         throw new Error('Unapproved sources');
       }
 
@@ -206,6 +218,11 @@ export async function generateAndSavePost() {
       break;
     } catch (err) {
       console.warn(`⚠️ Attempt ${attempt} failed: ${err.message}`);
+      // If parse failed but we got a title, exclude that topic too
+      if (title && !excludeTopics.includes(extractTopic(title))) {
+        const topic = extractTopic(title);
+        if (topic) excludeTopics.push(topic);
+      }
       if (attempt < 3) {
         // If rate limited, wait for the retry-after period; otherwise wait 15s
         const retryAfter = err.status === 429 ? ((err.headers?.['retry-after'] || 60) * 1000) : 15000;
