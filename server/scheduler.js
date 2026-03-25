@@ -128,6 +128,10 @@ function isApprovedDomain(url, approvedSources) {
   }
 }
 
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function attemptGeneration(theme, approvedSources) {
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -137,10 +141,9 @@ async function attemptGeneration(theme, approvedSources) {
     messages: [{ role: 'user', content: buildPrompt(theme, approvedSources) }],
   });
 
-  let response = '';
-  for (const block of message.content) {
-    if (block.type === 'text') response += block.text;
-  }
+  // Collect only the final text block (last one contains the formatted post)
+  const textBlocks = message.content.filter(b => b.type === 'text');
+  const response = textBlocks.length > 0 ? textBlocks[textBlocks.length - 1].text : '';
 
   console.log('Full response:\n', response);
 
@@ -203,8 +206,18 @@ async function generateAndSavePost() {
       break;
     } catch (err) {
       console.warn(`⚠️ Attempt ${attempt} failed: ${err.message}`);
-      if (attempt === 3) {
-        // Final fallback — no source restriction
+      if (attempt < 3) {
+        // If rate limited, wait for the retry-after period; otherwise wait 15s
+        const retryAfter = err.status === 429 ? ((err.headers?.['retry-after'] || 60) * 1000) : 15000;
+        console.log(`⏳ Waiting ${Math.round(retryAfter / 1000)}s before next attempt...`);
+        await sleep(retryAfter);
+      } else {
+        // Final fallback — no source restriction, wait if rate limited
+        if (err.status === 429) {
+          const retryAfter = (err.headers?.['retry-after'] || 60) * 1000;
+          console.log(`⏳ Rate limited. Waiting ${Math.round(retryAfter / 1000)}s before fallback...`);
+          await sleep(retryAfter);
+        }
         console.warn('⚠️ All approved-source attempts failed. Falling back to open sources...');
         usedApprovedSources = false;
         ({ title, content, links } = await attemptGeneration(theme, null));
