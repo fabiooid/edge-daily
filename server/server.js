@@ -74,21 +74,9 @@ app.get('/api/posts/:slug', async (req, res) => {
 
 
 
-// TEMP: manual trigger
 app.post('/api/trigger-post', requireApiKey, async (req, res) => {
   res.json({ ok: true, message: 'Post generation started' });
   generateAndSavePost().catch(err => console.error('Manual trigger error:', err));
-});
-
-// TEMP: delete bad post ID 20 and regenerate
-app.post('/api/fix-today-post', requireApiKey, async (req, res) => {
-  try {
-    const del = await deletePostById(20);
-    res.json({ deleted: del.changes });
-    generateAndSavePost().catch(err => console.error('Regen error:', err));
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 });
 
 app.listen(PORT, () => {

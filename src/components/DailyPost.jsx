@@ -47,7 +47,7 @@ function DailyPost() {
       <p className="post-date">{post.date.split('-').reverse().join('-')}</p>
       
       <div className="post-content">
-        {post.content.split('\n\n').map((paragraph, index) => (
+        {(post.content || '').replace(/LINKS:[\s\S]*/i, '').trim().split('\n\n').map((paragraph, index) => (
           <p key={index}>{paragraph}</p>
         ))}
       </div>

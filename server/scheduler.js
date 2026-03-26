@@ -154,7 +154,7 @@ async function sleep(ms) {
 async function attemptGeneration(theme, approvedSources, recentTitles = []) {
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 2048,
+    max_tokens: 4096,
     temperature: 0.7,
     tools: [{ type: "web_search_20250305", name: "web_search" }],
     messages: [{ role: 'user', content: buildPrompt(theme, approvedSources, recentTitles) }],
@@ -170,8 +170,11 @@ async function attemptGeneration(theme, approvedSources, recentTitles = []) {
   const contentMatch = response.match(/CONTENT: ([\s\S]+?)(?=LINKS:|$)/);
   const linksMatch = response.match(/LINKS:([\s\S]+)/);
 
-  const title = titleMatch ? titleMatch[1].trim() : `Understanding ${theme}`;
-  const content = contentMatch ? contentMatch[1].trim() : response;
+  if (!titleMatch) throw new Error('Malformed response: missing TITLE');
+  if (!contentMatch || !contentMatch[1].trim()) throw new Error('Malformed response: missing CONTENT');
+
+  const title = titleMatch[1].trim();
+  const content = contentMatch[1].replace(/LINKS:[\s\S]*/i, '').trim();
 
   let links = [];
   if (linksMatch) {
