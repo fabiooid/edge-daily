@@ -95,7 +95,7 @@ async function validateLinks(links) {
 function buildPrompt(theme, approvedSources, recentTitles = []) {
   const sourceConstraint = approvedSources
     ? `- ONLY use links from these reputable sources: ${approvedSources.join(', ')}\n        - Do not use any other domains\n        - If you cannot find 3 links from the approved sources for a topic, DO NOT use unapproved sources — instead, abandon that topic and search for a completely different ${theme} story`
-    : `- Use links from reputable industry publications, company blogs, or official documentation\n        - Avoid academic papers, government databases, social media, or Wikipedia`;
+    : `- Use links from reputable industry publications, company blogs, official documentation, or university research pages\n        - Avoid government databases, social media, or Wikipedia`;
 
   const excludeClause = recentTitles.length > 0
     ? `These topics were already covered recently — DO NOT write about them or anything directly related:\n${recentTitles.map(t => `  - "${t}"`).join('\n')}\nFind a completely different ${theme} story.\n\n`
