@@ -180,16 +180,17 @@ async function attemptGeneration(theme, approvedSources, recentTitles = []) {
 }
 
 
-export async function generateAndSavePost() {
+export async function generateAndSavePost(themeOverride = null, dateOverride = null) {
   console.log('Generating daily post...\n');
 
-  const theme = getTodaysTheme();
+  const theme = themeOverride || getTodaysTheme();
   if (!theme) {
     console.log('⏸️  No post scheduled for today.');
     return;
   }
 
-  console.log(`📅 Today's theme: ${theme}\n`);
+  const postDate = dateOverride || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Hong_Kong' });
+  console.log(`📅 Theme: ${theme}, Date: ${postDate}\n`);
 
   const APPROVED_SOURCES = await fetchApprovedSources();
   const approvedList = APPROVED_SOURCES[theme];
@@ -231,13 +232,7 @@ export async function generateAndSavePost() {
   await validateLinks(links);
   console.log('✅ All links validated');
 
-  const post = await createPost(
-    theme,
-    title,
-    content,
-    links,
-    new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Hong_Kong' })
-  );
+  const post = await createPost(theme, title, content, links, postDate);
 
   console.log('\n✅ Post created with ID:', post.id);
   console.log('📝 Title:', title);

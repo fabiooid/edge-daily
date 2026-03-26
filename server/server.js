@@ -75,8 +75,9 @@ app.get('/api/posts/:slug', async (req, res) => {
 
 
 app.post('/api/trigger-post', requireApiKey, async (req, res) => {
-  res.json({ ok: true, message: 'Post generation started' });
-  generateAndSavePost().catch(err => console.error('Manual trigger error:', err));
+  const { theme, date } = req.body || {};
+  res.json({ ok: true, message: 'Post generation started', theme: theme || 'auto', date: date || 'today' });
+  generateAndSavePost(theme || null, date || null).catch(err => console.error('Manual trigger error:', err));
 });
 
 app.delete('/api/posts/:slug', requireApiKey, async (req, res) => {
