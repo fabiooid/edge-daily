@@ -79,6 +79,17 @@ app.post('/api/trigger-post', requireApiKey, async (req, res) => {
   generateAndSavePost().catch(err => console.error('Manual trigger error:', err));
 });
 
+app.delete('/api/posts/:slug', requireApiKey, async (req, res) => {
+  try {
+    const post = await getPostBySlug(req.params.slug);
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    const result = await deletePostById(post.id);
+    res.json({ deleted: result.changes });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
