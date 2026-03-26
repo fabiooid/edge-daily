@@ -91,19 +91,6 @@ async function validateLinks(links) {
   }
 }
 
-function titleOverlapsExcluded(newTitle, recentTitles) {
-  const stopWords = new Set(['the','a','an','and','or','for','in','of','to','is','are','on','at','by','as','up','its','with','from','that','this','was','has','have','been','will','be','into','over','about','than','more','also','after','after','billion','million','new','first','latest']);
-  const keywords = newTitle.toLowerCase().split(/\s+/)
-    .map(w => w.replace(/[^a-z0-9]/g, ''))
-    .filter(w => w.length > 3 && !stopWords.has(w));
-  return recentTitles.some(recent => {
-    const recentWords = recent.toLowerCase().split(/\s+/)
-      .map(w => w.replace(/[^a-z0-9]/g, ''))
-      .filter(w => w.length > 3 && !stopWords.has(w));
-    const matches = keywords.filter(k => recentWords.includes(k));
-    return matches.length >= 2;
-  });
-}
 
 function buildPrompt(theme, approvedSources, recentTitles = []) {
   const sourceConstraint = approvedSources
@@ -147,9 +134,6 @@ function isApprovedDomain(url, approvedSources) {
   }
 }
 
-async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 async function attemptGeneration(theme, approvedSources, recentTitles = []) {
   const message = await anthropic.messages.create({
@@ -224,47 +208,18 @@ export async function generateAndSavePost() {
 
   let title, content, links;
   let usedApprovedSources = true;
-  const bannedTitles = [...recentTitles];
 
-  // Try up to 3 times with approved sources only
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    console.log(`🔄 Attempt ${attempt}/3 (approved sources only)...`);
-    try {
-      ({ title, content, links } = await attemptGeneration(theme, approvedList, bannedTitles));
-
-      // Check if content overlaps with a recently covered topic
-      if (titleOverlapsExcluded(title, recentTitles)) {
-        if (!bannedTitles.includes(title)) bannedTitles.push(title);
-        console.warn(`⚠️ Attempt ${attempt}: generated content overlaps with a recent post. Banning: "${title}"`);
-        throw new Error('Topic already covered');
-      }
-
-      const unapproved = links.filter(l => !isApprovedDomain(l.url, approvedList));
-      if (unapproved.length > 0) {
-        if (!bannedTitles.includes(title)) bannedTitles.push(title);
-        console.warn(`⚠️ Attempt ${attempt}: unapproved domains: ${unapproved.map(l => new URL(l.url).hostname).join(', ')}. Banning: "${title}"`);
-        throw new Error('Unapproved sources');
-      }
-
-      console.log('✅ All links from approved sources');
-      break;
-    } catch (err) {
-      console.warn(`⚠️ Attempt ${attempt} failed: ${err.message}`);
-      if (attempt < 3) {
-        const retryAfter = err.status === 429 ? ((err.headers?.['retry-after'] || 60) * 1000) : 15000;
-        console.log(`⏳ Waiting ${Math.round(retryAfter / 1000)}s before next attempt...`);
-        await sleep(retryAfter);
-      } else {
-        if (err.status === 429) {
-          const retryAfter = (err.headers?.['retry-after'] || 60) * 1000;
-          console.log(`⏳ Rate limited. Waiting ${Math.round(retryAfter / 1000)}s before fallback...`);
-          await sleep(retryAfter);
-        }
-        console.warn('⚠️ All approved-source attempts failed. Falling back to open sources...');
-        usedApprovedSources = false;
-        ({ title, content, links } = await attemptGeneration(theme, null, bannedTitles));
-      }
-    }
+  // Attempt 1: approved sources only
+  try {
+    console.log('🔄 Attempt 1: approved sources...');
+    ({ title, content, links } = await attemptGeneration(theme, approvedList, recentTitles));
+    console.log('✅ All links from approved sources');
+  } catch (err) {
+    console.warn(`⚠️ Attempt 1 failed: ${err.message}`);
+    // Attempt 2: open sources (fallback)
+    usedApprovedSources = false;
+    console.warn('⚠️ Falling back to open sources...');
+    ({ title, content, links } = await attemptGeneration(theme, null, recentTitles));
   }
 
   console.log('\n📎 Found', links.length, 'valid links');
