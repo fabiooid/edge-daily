@@ -144,9 +144,10 @@ async function attemptGeneration(theme, approvedSources, recentTitles = []) {
     messages: [{ role: 'user', content: buildPrompt(theme, approvedSources, recentTitles) }],
   });
 
-  // Collect only the final text block (last one contains the formatted post)
+  // Find the text block that contains the formatted post (not always the last one)
   const textBlocks = message.content.filter(b => b.type === 'text');
-  const response = textBlocks.length > 0 ? textBlocks[textBlocks.length - 1].text : '';
+  const response = textBlocks.find(b => b.text.includes('TITLE:'))?.text ||
+                   textBlocks[textBlocks.length - 1]?.text || '';
 
   console.log('Full response:\n', response);
 
@@ -217,8 +218,12 @@ export async function generateAndSavePost(themeOverride = null, dateOverride = n
     console.log('✅ All links from approved sources');
   } catch (err) {
     console.warn(`⚠️ Attempt 1 failed: ${err.message}`);
-    // Attempt 2: open sources (fallback)
     usedApprovedSources = false;
+    const waitMs = err.status === 429
+      ? ((parseInt(err.headers?.['retry-after']) || 65) * 1000)
+      : 65000;
+    console.warn(`⏳ Waiting ${Math.round(waitMs / 1000)}s before fallback...`);
+    await new Promise(r => setTimeout(r, waitMs));
     console.warn('⚠️ Falling back to open sources...');
     ({ title, content, links } = await attemptGeneration(theme, null, recentTitles));
   }
