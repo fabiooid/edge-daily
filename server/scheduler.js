@@ -98,7 +98,7 @@ function buildTopicPrompt(theme, approvedSources, recentTitles) {
     : '';
 
   const focus = theme === 'Energy'
-    ? 'energy technology — EVs, batteries, solar, wind, grid storage, clean energy innovation'
+    ? 'energy technology — electric vehicles, EV batteries, charging infrastructure, solar panels, wind turbines, grid-scale storage, clean energy startups, energy tech products and launches. Think: what would an engineer at Tesla, Rivian, or a utility-scale solar company want to read? AVOID geopolitical energy news, oil prices, gas supply crises, sanctions, or war-related energy stories.'
     : theme;
 
   return `${excludeClause}Search for the most interesting ${focus} news story from this week that has coverage on these domains: ${approvedSources.join(', ')}.
