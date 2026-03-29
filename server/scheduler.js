@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { createPost, getPostsByTheme } from './database.js';
 import { runEval } from './eval.js';
 import { getTodaysTheme } from './theme-scheduler.js';
+import { postToX } from './x-client.js';
 
 dotenv.config();
 
@@ -103,6 +104,8 @@ function buildTopicPrompt(theme, approvedSources, recentTitles) {
     : theme;
 
   return `${excludeClause}Search for the most interesting ${focus} news story from this week that has coverage on these domains: ${approvedSources.join(', ')}.
+
+Also search for what is currently trending on X (Twitter) in the ${focus} space today. Prefer topics that are generating active discussion on X right now, as they will resonate more with readers.
 
 Pick ONE specific, newsworthy story. Respond ONLY with this format — no other text:
 TOPIC: [one-line headline describing the specific story]
@@ -286,8 +289,9 @@ export async function generateAndSavePost(themeOverride = null, dateOverride = n
 
   await suggestNewSources(links, theme);
 
-  // Run eval after post is saved (non-blocking)
+  // Run eval and post to X after post is saved (non-blocking)
   runEval(post, recentTitles).catch(err => console.error('Eval error:', err));
+  postToX(post).catch(err => console.error('X post error:', err));
 
   console.log('\nRefresh your browser to see it!');
 }
