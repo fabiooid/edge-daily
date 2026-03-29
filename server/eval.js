@@ -37,6 +37,10 @@ CRITERIA:
    5 = Specific, informative, tells you exactly what happened ("Tesla and LG Energy Lock In $4.3B US Battery Deal")
    1 = Vague or generic ("Understanding Fintech", "The Future of AI")
 
+7. social_resonance
+   5 = Topic has a strong news hook — a product launch, controversy, surprising stat, or notable company move that would generate active discussion on X right now
+   1 = Generic or evergreen angle with no news hook — could have been published any week this year, unlikely to spark conversation
+
 Respond ONLY with this JSON format:
 {
   "relevance": { "score": 0, "reason": "" },
@@ -44,7 +48,8 @@ Respond ONLY with this JSON format:
   "clarity": { "score": 0, "reason": "" },
   "source_quality": { "score": 0, "reason": "" },
   "topic_freshness": { "score": 0, "reason": "" },
-  "headline_quality": { "score": 0, "reason": "" }
+  "headline_quality": { "score": 0, "reason": "" },
+  "social_resonance": { "score": 0, "reason": "" }
 }`;
 
 export async function runEval(post, recentTitles = []) {
@@ -89,7 +94,7 @@ ${linksText}`;
   }
 
   // Log to console
-  const overall = Object.values(scores).reduce((sum, c) => sum + c.score, 0) / 6;
+  const overall = Object.values(scores).reduce((sum, c) => sum + c.score, 0) / 7;
   console.log(`📊 Eval scores — Overall: ${overall.toFixed(1)}`);
   for (const [key, val] of Object.entries(scores)) {
     console.log(`   ${key}: ${val.score}/5 — ${val.reason}`);
@@ -124,6 +129,8 @@ ${linksText}`;
           'Word Count': wordCount,
           'Has Em Dash': hasEmDash,
           'Post Slug': post.slug,
+          'Social Resonance': scores.social_resonance.score,
+          'Social Resonance Notes': scores.social_resonance.reason,
         },
       }),
     });
