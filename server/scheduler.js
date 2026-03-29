@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import { createPost, getPostsByTheme } from './database.js';
 import { runEval } from './eval.js';
 import { getTodaysTheme } from './theme-scheduler.js';
-import { postToX } from './x-client.js';
 
 dotenv.config();
 
@@ -289,9 +288,8 @@ export async function generateAndSavePost(themeOverride = null, dateOverride = n
 
   await suggestNewSources(links, theme);
 
-  // Run eval and post to X after post is saved (non-blocking)
+  // Run eval after post is saved (non-blocking)
   runEval(post, recentTitles).catch(err => console.error('Eval error:', err));
-  postToX(post).catch(err => console.error('X post error:', err));
 
   console.log('\nRefresh your browser to see it!');
 }
