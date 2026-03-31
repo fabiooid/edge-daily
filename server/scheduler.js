@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
-import { createPost, getPostsByTheme } from './database.js';
+import { createPost, getPostsByTheme, getAllPosts } from './database.js';
 import { runEval } from './eval.js';
 import { getTodaysTheme } from './theme-scheduler.js';
 
@@ -231,16 +231,17 @@ export async function generateAndSavePost(themeOverride = null, dateOverride = n
   const APPROVED_SOURCES = await fetchApprovedSources();
   const approvedList = APPROVED_SOURCES[theme];
 
-  // Seed exclude list with titles from the last 30 days for this theme
-  const recentPosts = await getPostsByTheme(theme);
+  // Seed exclude list with titles from the last 30 days across ALL themes
+  // Prevents duplicate stories appearing in different theme posts
+  const allRecentPosts = await getAllPosts();
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 30);
-  const recentTitles = recentPosts
+  const recentTitles = allRecentPosts
     .filter(p => new Date(p.date) >= cutoff)
     .map(p => p.title)
     .filter(Boolean);
   if (recentTitles.length > 0) {
-    console.log(`📚 Excluding ${recentTitles.length} recently covered topics`);
+    console.log(`📚 Excluding ${recentTitles.length} recently covered topics (across all themes)`);
   }
 
   // Step 1: Haiku selects the topic
