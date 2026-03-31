@@ -247,6 +247,15 @@ function deletePostById(id) {
   });
 }
 
+function getPostByDate(date) {
+  return new Promise((resolve, reject) => {
+    db.get('SELECT * FROM posts WHERE date = ?', [date], (err, row) => {
+      if (err) reject(err);
+      else resolve(row || null);
+    });
+  });
+}
+
 export {
     initializeDatabase,
     createPost,
@@ -256,5 +265,6 @@ export {
     getPostsByTheme,
     updatePostLinks,
     updatePostContent,
-    deletePostById
+    deletePostById,
+    getPostByDate
 };

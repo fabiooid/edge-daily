@@ -2,8 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import { initializeDatabase, getLatestPost, getAllPosts, getPostBySlug, updatePostContent, deletePostById } from './database.js';
+import { initializeDatabase, getLatestPost, getAllPosts, getPostBySlug, updatePostContent, deletePostById, getPostByDate } from './database.js';
 import { startScheduler, generateAndSavePost } from './scheduler.js';
+import { getTodaysTheme } from './theme-scheduler.js';
 import { runEval } from './eval.js';
 
 dotenv.config();
@@ -16,6 +17,37 @@ initializeDatabase();
 
 // Start scheduler
 startScheduler();
+
+// Startup catch-up: if today has a scheduled theme and no post yet, generate one
+async function checkMissedPost() {
+  try {
+    const theme = getTodaysTheme();
+    if (!theme) return; // No post scheduled today (Fri/Sat/Sun)
+
+    const hkNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Hong_Kong' }));
+    const todayDate = hkNow.toISOString().split('T')[0];
+    const hourHKT = hkNow.getHours();
+
+    if (hourHKT < 7) {
+      console.log('⏳ Too early for catch-up check — cron will handle it at 07:30 HKT');
+      return;
+    }
+
+    const existing = await getPostByDate(todayDate);
+    if (existing) {
+      console.log(`✅ Post already exists for ${todayDate} — no catch-up needed`);
+      return;
+    }
+
+    console.log(`⚠️  No post found for ${todayDate} (${theme}) — starting catch-up generation...`);
+    generateAndSavePost(theme, todayDate).catch(err => console.error('Catch-up generation error:', err));
+  } catch (err) {
+    console.error('Catch-up check error:', err);
+  }
+}
+
+// Run catch-up check 5 seconds after startup (gives DB time to init)
+setTimeout(checkMissedPost, 5000);
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: process.env.FRONTEND_URL || 'https://edgedaily.vercel.app' }));
