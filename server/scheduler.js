@@ -280,7 +280,8 @@ export async function generateAndSavePost(themeOverride = null, dateOverride = n
   await validateLinks(links);
   console.log('✅ All links validated');
 
-  const post = await createPost(theme, title, content, links, postDate);
+  const { id, slug } = await createPost(theme, title, content, links, postDate);
+  const post = { id, slug, theme, title, content, links, date: postDate };
 
   console.log('\n✅ Post created with ID:', post.id);
   console.log('📝 Title:', title);
