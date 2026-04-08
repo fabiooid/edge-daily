@@ -125,7 +125,8 @@ function buildPrompt(theme, approvedSources, topic) {
         CRITICAL REQUIREMENTS FOR LINKS:
         - You MUST include exactly 3 links
         - Use ACTUAL URLs from your search results — never Google search links
-        - Links must be real articles directly about this story
+        - Every link must be directly and specifically about the SAME company, product, or event as the article — not just the same theme or industry
+        - If you cannot find 3 links about the exact story, use 2 or even 1 — do NOT pad with loosely related articles
         ${sourceConstraint}
 
         Respond ONLY with this exact format — no commentary before or after:
