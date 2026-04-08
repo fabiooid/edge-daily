@@ -103,7 +103,7 @@ ${linksText}`;
 
   // Write to Airtable
   try {
-    await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${EVAL_TABLE_ID}`, {
+    const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${EVAL_TABLE_ID}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${process.env.AIRTABLE_TOKEN}`,
@@ -134,7 +134,12 @@ ${linksText}`;
         },
       }),
     });
-    console.log('✅ Eval saved to Airtable');
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`❌ Airtable error ${res.status}:`, body);
+    } else {
+      console.log('✅ Eval saved to Airtable');
+    }
   } catch (err) {
     console.error('❌ Failed to save eval to Airtable:', err.message);
   }

@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import { initializeDatabase, getLatestPost, getAllPosts, getPostBySlug, updatePostContent, deletePostById, getPostByDate } from './database.js';
+import { initializeDatabase, getLatestPost, getAllPosts, getPostBySlug, updatePostContent, deletePostById, getPostByDate, getPostsByTheme } from './database.js';
 import { startScheduler, generateAndSavePost } from './scheduler.js';
 import { getTodaysTheme } from './theme-scheduler.js';
 import { runEval } from './eval.js';
@@ -111,6 +111,19 @@ app.post('/api/trigger-post', requireApiKey, async (req, res) => {
   const { theme, date } = req.body || {};
   res.json({ ok: true, message: 'Post generation started', theme: theme || 'auto', date: date || 'today' });
   generateAndSavePost(theme || null, date || null).catch(err => console.error('Manual trigger error:', err));
+});
+
+app.post('/api/eval/:slug', requireApiKey, async (req, res) => {
+  try {
+    const post = await getPostBySlug(req.params.slug);
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    res.json({ ok: true, message: 'Eval started', slug: post.slug });
+    const allPosts = await getAllPosts();
+    const recentTitles = allPosts.filter(p => p.slug !== post.slug).map(p => p.title).filter(Boolean);
+    runEval(post, recentTitles).catch(err => console.error('Manual eval error:', err));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.delete('/api/posts/:slug', requireApiKey, async (req, res) => {
