@@ -63,7 +63,7 @@ const requireApiKey = (req, res, next) => {
 export { requireApiKey };
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+  res.json({ status: 'ok', message: 'Server is running', version: '2026-04-08-a' });
 });
 
 // Get latest post
