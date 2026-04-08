@@ -41,6 +41,14 @@ async function fetchAllDomains() {
   return new Set(data.records.map(r => r.fields.Domain).filter(Boolean));
 }
 
+async function fetchRejectedDomains() {
+  const token = process.env.AIRTABLE_TOKEN;
+  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}?filterByFormula=%7BStatus%7D%3D'Rejected'`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json();
+  return data.records.map(r => r.fields.Domain).filter(Boolean);
+}
+
 const BLOCKLISTED_DOMAINS = ['google.com', 'twitter.com', 'x.com', 'facebook.com', 'linkedin.com', 'reddit.com', 'youtube.com', 'wikipedia.org'];
 
 async function suggestNewSources(links, theme) {
@@ -111,10 +119,14 @@ TOPIC: [one-line headline describing the specific story]
 CONTEXT: [1-2 sentences summarising what happened and why it matters]`;
 }
 
-function buildPrompt(theme, approvedSources, topic) {
+function buildPrompt(theme, approvedSources, topic, rejectedDomains = []) {
+  const rejectedClause = rejectedDomains.length > 0
+    ? `\n        - NEVER use links from these rejected domains: ${rejectedDomains.join(', ')}`
+    : '';
+
   const sourceConstraint = approvedSources
     ? `- ONLY use links from these reputable sources: ${approvedSources.join(', ')}\n        - Do not use any other domains`
-    : `- Use links from reputable industry publications, company blogs, or official documentation\n        - Avoid government databases, social media, or Wikipedia`;
+    : `- Use links from reputable industry publications, company blogs, or official documentation\n        - Avoid government databases, social media, or Wikipedia${rejectedClause}`;
 
   return `Write a tech news article about this story: "${topic}"
 
@@ -169,14 +181,14 @@ function isApprovedDomain(url, approvedSources) {
 }
 
 
-async function attemptGeneration(theme, approvedSources, topic) {
+async function attemptGeneration(theme, approvedSources, topic, rejectedDomains = []) {
   console.log(`✍️  Sonnet writing article${approvedSources ? ' (approved sources)' : ' (open sources)'}...`);
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 4096,
     temperature: 0.7,
     tools: [{ type: "web_search_20250305", name: "web_search" }],
-    messages: [{ role: 'user', content: buildPrompt(theme, approvedSources, topic) }],
+    messages: [{ role: 'user', content: buildPrompt(theme, approvedSources, topic, rejectedDomains) }],
   });
 
   // Concatenate all text blocks — TITLE/CONTENT/LINKS may be split across multiple blocks
@@ -257,9 +269,15 @@ export async function generateAndSavePost(themeOverride = null, dateOverride = n
   let title, content, links;
   let usedApprovedSources = true;
 
+  // Fetch rejected domains to block in all generation attempts
+  const rejectedDomains = await fetchRejectedDomains();
+  if (rejectedDomains.length > 0) {
+    console.log(`🚫 Blocking ${rejectedDomains.length} rejected domains`);
+  }
+
   // Step 2: Sonnet writes the article
   try {
-    ({ title, content, links } = await attemptGeneration(theme, approvedList, topic));
+    ({ title, content, links } = await attemptGeneration(theme, approvedList, topic, rejectedDomains));
     console.log('✅ All links from approved sources');
   } catch (err) {
     console.warn(`⚠️ Sonnet attempt failed: ${err.message}`);
@@ -270,7 +288,7 @@ export async function generateAndSavePost(themeOverride = null, dateOverride = n
       await new Promise(r => setTimeout(r, waitMs));
     }
     console.warn('⚠️ Falling back to open sources...');
-    ({ title, content, links } = await attemptGeneration(theme, null, topic));
+    ({ title, content, links } = await attemptGeneration(theme, null, topic, rejectedDomains));
   }
 
   console.log('\n📎 Found', links.length, 'valid links');
