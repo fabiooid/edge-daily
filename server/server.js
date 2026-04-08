@@ -46,8 +46,7 @@ async function checkMissedPost() {
   }
 }
 
-// Run catch-up check 5 seconds after startup (gives DB time to init)
-setTimeout(checkMissedPost, 5000);
+// Catch-up check runs after server is listening (see app.listen below)
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: process.env.FRONTEND_URL || 'https://edgedaily.vercel.app' }));
@@ -140,4 +139,6 @@ app.delete('/api/posts/:slug', requireApiKey, async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  // Run catch-up check after server is fully listening
+  setTimeout(checkMissedPost, 5000);
 });
