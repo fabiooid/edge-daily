@@ -180,6 +180,35 @@ function isApprovedDomain(url, approvedSources) {
   }
 }
 
+async function checkLinkRelevance(link, articleTitle) {
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 10,
+      messages: [{
+        role: 'user',
+        content: `Is this link directly about the same specific story, company, or product as the article titled "${articleTitle}"?
+
+Link title: "${link.title}"
+
+Reply with only YES or NO.`
+      }]
+    });
+    const answer = message.content.find(b => b.type === 'text')?.text?.trim().toUpperCase() || 'NO';
+    return answer.startsWith('YES');
+  } catch {
+    return true; // on error, assume relevant to avoid false rejections
+  }
+}
+
+async function filterRelevantLinks(links, articleTitle) {
+  const results = await Promise.all(links.map(async link => {
+    const relevant = await checkLinkRelevance(link, articleTitle);
+    if (!relevant) console.log(`🚫 Dropping irrelevant link: "${link.title}"`);
+    return relevant ? link : null;
+  }));
+  return results.filter(Boolean);
+}
 
 async function attemptGeneration(theme, approvedSources, topic, rejectedDomains = []) {
   console.log(`✍️  Sonnet writing article${approvedSources ? ' (approved sources)' : ' (open sources)'}...`);
@@ -275,23 +304,53 @@ export async function generateAndSavePost(themeOverride = null, dateOverride = n
     console.log(`🚫 Blocking ${rejectedDomains.length} rejected domains`);
   }
 
-  // Step 2: Sonnet writes the article
-  try {
-    ({ title, content, links } = await attemptGeneration(theme, approvedList, topic, rejectedDomains));
-    console.log('✅ All links from approved sources');
-  } catch (err) {
-    console.warn(`⚠️ Sonnet attempt failed: ${err.message}`);
-    usedApprovedSources = false;
-    if (err.status === 429) {
-      const waitMs = (parseInt(err.headers?.['retry-after']) || 65) * 1000;
-      console.warn(`⏳ Rate limited. Waiting ${Math.round(waitMs / 1000)}s before fallback...`);
-      await new Promise(r => setTimeout(r, waitMs));
+  // Step 2: Sonnet writes the article, with Haiku relevance gate (up to 2 topic retries)
+  const MAX_TOPIC_ATTEMPTS = 2;
+  let topicAttempt = 0;
+  let generated = false;
+
+  while (!generated && topicAttempt < MAX_TOPIC_ATTEMPTS) {
+    if (topicAttempt > 0) {
+      console.log(`🔄 Not enough relevant links — picking a new topic (attempt ${topicAttempt + 1})...`);
+      try {
+        topic = await selectTopic(theme, approvedList, [...recentTitles, title].filter(Boolean));
+      } catch (err) {
+        console.warn(`⚠️ Topic re-selection failed: ${err.message}`);
+      }
     }
-    console.warn('⚠️ Falling back to open sources...');
-    ({ title, content, links } = await attemptGeneration(theme, null, topic, rejectedDomains));
+
+    try {
+      ({ title, content, links } = await attemptGeneration(theme, approvedList, topic, rejectedDomains));
+      usedApprovedSources = true;
+    } catch (err) {
+      console.warn(`⚠️ Sonnet attempt failed: ${err.message}`);
+      usedApprovedSources = false;
+      if (err.status === 429) {
+        const waitMs = (parseInt(err.headers?.['retry-after']) || 65) * 1000;
+        console.warn(`⏳ Rate limited. Waiting ${Math.round(waitMs / 1000)}s before fallback...`);
+        await new Promise(r => setTimeout(r, waitMs));
+      }
+      console.warn('⚠️ Falling back to open sources...');
+      ({ title, content, links } = await attemptGeneration(theme, null, topic, rejectedDomains));
+    }
+
+    // Haiku relevance gate: filter out links not directly about the article
+    console.log(`🔎 Checking link relevance for: "${title}"`);
+    links = await filterRelevantLinks(links, title);
+    console.log(`📎 ${links.length} relevant link(s) after quality check`);
+
+    if (links.length >= 2) {
+      generated = true;
+    } else {
+      topicAttempt++;
+    }
   }
 
-  console.log('\n📎 Found', links.length, 'valid links');
+  if (links.length < 2) {
+    throw new Error(`Could not find a story with sufficient coverage after ${MAX_TOPIC_ATTEMPTS} attempts`);
+  }
+
+  console.log('\n📎 Found', links.length, 'relevant links');
   if (!usedApprovedSources) {
     console.warn('⚠️ Post published using fallback (unapproved) sources — review Airtable');
   }
