@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import { initializeDatabase, getLatestPost, getAllPosts, getPostBySlug, updatePostContent, deletePostById, getPostByDate, getPostsByTheme } from './database.js';
+import { initializeDatabase, getLatestPost, getAllPosts, getPostBySlug, updatePostContent, updatePostLinks, deletePostById, getPostByDate, getPostsByTheme } from './database.js';
 import { startScheduler, generateAndSavePost } from './scheduler.js';
 import { getTodaysTheme } from './theme-scheduler.js';
 import { runEval } from './eval.js';
@@ -120,6 +120,17 @@ app.post('/api/eval/:slug', requireApiKey, async (req, res) => {
     const allPosts = await getAllPosts();
     const recentTitles = allPosts.filter(p => p.slug !== post.slug).map(p => p.title).filter(Boolean);
     runEval(post, recentTitles).catch(err => console.error('Manual eval error:', err));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/posts/:slug/links', requireApiKey, async (req, res) => {
+  try {
+    const { links } = req.body;
+    if (!links || !Array.isArray(links)) return res.status(400).json({ error: 'links array required' });
+    const result = await updatePostLinks(req.params.slug, links);
+    res.json({ updated: result.changes });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
