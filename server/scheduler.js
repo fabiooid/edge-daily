@@ -101,7 +101,7 @@ async function validateLinks(links) {
 }
 
 
-function buildTopicPrompt(theme, approvedSources, recentTitles) {
+function buildTopicPrompt(theme, approvedSources, recentTitles, postDate) {
   const excludeClause = recentTitles.length > 0
     ? `These topics were already covered recently — do NOT suggest them:\n${recentTitles.map(t => `  - "${t}"`).join('\n')}\n\n`
     : '';
@@ -110,7 +110,9 @@ function buildTopicPrompt(theme, approvedSources, recentTitles) {
     ? 'energy technology — electric vehicles, EV batteries, charging infrastructure, solar panels, wind turbines, grid-scale storage, clean energy startups, energy tech products and launches. Think: what would an engineer at Tesla, Rivian, or a utility-scale solar company want to read? AVOID geopolitical energy news, oil prices, gas supply crises, sanctions, or war-related energy stories.'
     : theme;
 
-  return `${excludeClause}Search for the most interesting ${focus} news story from this week that has coverage on these domains: ${approvedSources.join(', ')}.
+  return `${excludeClause}Today is ${postDate}. Search for the most interesting ${focus} news story published in the last 7 days (between ${new Date(new Date(postDate) - 7 * 864e5).toISOString().split('T')[0]} and ${postDate}) that has coverage on these domains: ${approvedSources.join(', ')}.
+
+The story MUST have been published or updated after ${new Date(new Date(postDate) - 7 * 864e5).toISOString().split('T')[0]}. Do not pick stories older than 7 days.
 
 Also search for what is currently trending on X (Twitter) in the ${focus} space today. Prefer topics that are generating active discussion on X right now, as they will resonate more with readers.
 
@@ -128,9 +130,9 @@ function buildPrompt(theme, approvedSources, topic, rejectedDomains = []) {
     ? `- ONLY use links from these reputable sources: ${approvedSources.join(', ')}\n        - Do not use any other domains`
     : `- Use links from reputable industry publications, company blogs, or official documentation\n        - Avoid government databases, social media, or Wikipedia${rejectedClause}`;
 
-  return `Write a tech news article about this story: "${topic}"
+  return `Today is ${new Date().toISOString().split('T')[0]}. Write a tech news article about this story: "${topic}"
 
-        Search for 3 real article URLs specifically covering this story.
+        Search for 3 real article URLs specifically covering this story. Only use articles published in the last 7 days — do not cite articles older than that.
 
         Write for a reader who follows tech and business news but is not an expert. Assume basic familiarity. Write as a professional journalist from a news outlet like TechCrunch, Forbes, The Verge, or Wired. Never use em dashes (—).
 
@@ -150,12 +152,12 @@ function buildPrompt(theme, approvedSources, topic, rejectedDomains = []) {
         - [Article title] [URL]`;
 }
 
-async function selectTopic(theme, approvedSources, recentTitles) {
+async function selectTopic(theme, approvedSources, recentTitles, postDate) {
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 512,
     tools: [{ type: "web_search_20250305", name: "web_search" }],
-    messages: [{ role: 'user', content: buildTopicPrompt(theme, approvedSources, recentTitles) }],
+    messages: [{ role: 'user', content: buildTopicPrompt(theme, approvedSources, recentTitles, postDate) }],
   });
 
   const response = message.content
@@ -289,10 +291,10 @@ export async function generateAndSavePost(themeOverride = null, dateOverride = n
   // Step 1: Haiku selects the topic
   let topic;
   try {
-    topic = await selectTopic(theme, approvedList, recentTitles);
+    topic = await selectTopic(theme, approvedList, recentTitles, postDate);
   } catch (err) {
     console.warn(`⚠️ Haiku topic selection failed: ${err.message}. Using open-ended prompt.`);
-    topic = `a trending ${theme} development from this week`;
+    topic = `a trending ${theme} development published in the last 7 days`;
   }
 
   let title, content, links;
@@ -313,7 +315,7 @@ export async function generateAndSavePost(themeOverride = null, dateOverride = n
     if (topicAttempt > 0) {
       console.log(`🔄 Not enough relevant links — picking a new topic (attempt ${topicAttempt + 1})...`);
       try {
-        topic = await selectTopic(theme, approvedList, [...recentTitles, title].filter(Boolean));
+        topic = await selectTopic(theme, approvedList, [...recentTitles, title].filter(Boolean), postDate);
       } catch (err) {
         console.warn(`⚠️ Topic re-selection failed: ${err.message}`);
       }
