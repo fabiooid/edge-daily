@@ -108,6 +108,8 @@ function buildTopicPrompt(theme, approvedSources, recentTitles, postDate) {
 
   const focus = theme === 'Energy'
     ? 'energy technology — electric vehicles, EV batteries, charging infrastructure, solar panels, wind turbines, grid-scale storage, clean energy startups, energy tech products and launches. Think: what would an engineer at Tesla, Rivian, or a utility-scale solar company want to read? AVOID geopolitical energy news, oil prices, gas supply crises, sanctions, or war-related energy stories.'
+    : theme === 'AI'
+    ? 'AI — prioritise announcements, product launches, model releases, and major moves from the key players: Anthropic, OpenAI, Google DeepMind/Gemini, Meta AI, Mistral, xAI. What have they shipped or announced this week? Only fall back to broader AI news if none of the key players have made a significant move.'
     : theme;
 
   return `${excludeClause}Today is ${postDate}. Search for the most interesting ${focus} news story published in the last 7 days (between ${new Date(new Date(postDate) - 7 * 864e5).toISOString().split('T')[0]} and ${postDate}) that has coverage on these domains: ${approvedSources.join(', ')}.
