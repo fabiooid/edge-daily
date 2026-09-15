@@ -17,10 +17,11 @@ Each post includes:
 
 ## Tech Stack
 
-- **Frontend:** React + Vite
-- **Backend:** Node.js + Express
+- **Frontend:** React + Vite + TypeScript + shadcn/ui
+- **Backend:** Node.js + Express 5 + TypeScript
+- **AI orchestration:** Mastra (agents + workflows)
 - **Database:** SQLite
-- **AI:** Anthropic Claude API with web search
+- **Models:** Anthropic Claude (Haiku + Sonnet) with web search
 - **Automation:** node-cron for scheduled content generation
 
 ## Features
@@ -35,7 +36,7 @@ Each post includes:
 ## Local Development
 
 ### Prerequisites
-- Node.js v18+
+- Node.js v22.13+ (TypeScript in Node is used for Mastra)
 - Anthropic API key
 
 ### Setup
@@ -63,9 +64,11 @@ PORT=3001
 ANTHROPIC_API_KEY=your_api_key_here
 ```
 
+Optional later: Airtable vars for approved sources + eval logging.
+
 5. Run the application:
 
-Terminal 1 (Backend):
+Terminal 1 (Backend API + cron):
 ```bash
 cd server
 npm run dev
@@ -76,28 +79,44 @@ Terminal 2 (Frontend):
 npm run dev
 ```
 
-6. Open http://localhost:5174 in your browser
+Optional Terminal 3 (Mastra Studio, local):
+```bash
+cd server
+npm run mastra:dev
+```
+Then open http://localhost:4111
+
+Mastra HTTP endpoints are also mounted on the Express server at:
+`http://localhost:3001/mastra` (agents, workflows, etc.)
+
+6. Open http://localhost:5173 in your browser
 
 ### Manual Post Generation
 
-To manually generate a post:
 ```bash
 cd server
-node generate-post.js
+npm run generate
+# or with overrides:
+node generate-post.ts Web3 2026-09-15
 ```
+
+This runs the Mastra `generate-daily-post` workflow.
 
 ## Project Structure
 ```
 edge-daily/
-├── src/                    # React frontend
-│   ├── components/         # UI components
-│   └── App.jsx            # Main app component
-├── server/                 # Node.js backend
-│   ├── server.js          # Express server
-│   ├── database.js        # SQLite database functions
-│   ├── scheduler.js       # Cron job scheduler
-│   ├── theme-scheduler.js # Theme rotation logic
-│   └── generate-post.js   # Manual post generator
+├── src/                         # React frontend (TypeScript)
+├── server/
+│   ├── server.ts                # Express API + Mastra adapter
+│   ├── scheduler.ts             # Thin wrapper → Mastra workflow
+│   ├── database.ts              # SQLite posts DB
+│   ├── generate-post.ts         # CLI entry for generation
+│   └── src/mastra/              # Mastra agents + workflow
+│       ├── index.ts
+│       ├── agents/
+│       ├── workflows/
+│       ├── tools/
+│       └── lib/
 └── README.md
 ```
 

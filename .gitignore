@@ -13,6 +13,8 @@ server/.env
 
 # Database
 *.db
+*.db-shm
+*.db-wal
 server/*.db
 
 # Build outputs
@@ -34,6 +36,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+server/.cursor/
 
 # Vite
 .vite/
