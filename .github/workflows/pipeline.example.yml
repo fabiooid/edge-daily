@@ -1,0 +1,30 @@
+# Alternative scheduler only. Railway cron is the primary way to run the pipeline.
+# This file is an example. It does not run on a schedule.
+name: Pipeline (GitHub Actions alternative)
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: ingest, compile or remind
+        required: true
+        default: compile
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/pipeline.ts ${{ inputs.job }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SITE_URL: ${{ secrets.SITE_URL }}
