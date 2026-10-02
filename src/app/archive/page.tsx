@@ -2,9 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import EmptyState from '@/components/empty-state'
+import ArchiveV1List from '@/components/archive-v1-list'
+import Breadcrumbs from '@/components/breadcrumbs'
+import PageShell from '@/components/page-shell'
+import PostsEmpty from '@/components/posts-empty'
 import { getArchivePosts, getPublishedEditions } from '@/lib/queries/editions'
-import { formatDate, formatWeekLabel } from '@/lib/utils'
+import { formatPostDate, formatWeekLabel, getPostExcerpt } from '@/lib/utils'
 
 export const metadata: Metadata = {
   title: 'Archive',
@@ -16,28 +19,48 @@ export default async function ArchivePage() {
     const [editions, posts] = await Promise.all([getPublishedEditions(), getArchivePosts()])
 
     return (
-      <main className="mx-auto max-w-[720px] px-8 py-16">
-        <h1 className="mb-10 font-heading text-4xl font-bold tracking-tight">Archive</h1>
+      <PageShell>
+        <Breadcrumbs
+          items={[
+            { label: 'Home', to: '/' },
+            { label: 'Archive' },
+          ]}
+        />
+
+        <h1 className="mb-10 font-heading text-4xl font-bold tracking-tight">
+          Archive
+        </h1>
 
         <section className="mb-16">
-          <h2 className="mb-6 font-heading text-xl font-semibold">Weekly editions</h2>
+          <h2 className="mb-10 font-heading text-lg font-semibold">Weekly editions</h2>
           {editions.length === 0 ? (
-            <EmptyState
-              title="No weekly editions yet"
-              body="Approved Tuesday editions will show up here."
+            <PostsEmpty
+              title="No weekly editions yet."
+              description="Approved Tuesday editions will show up here."
             />
           ) : (
             <div className="flex flex-col gap-4">
               {editions.map((edition) => (
-                <Link key={edition.id} href={`/editions/${edition.editionWeek}`}>
+                <Link key={edition.id} href={`/editions/${edition.editionWeek}`} className="block">
                   <Card className="transition-colors hover:bg-muted/40">
                     <CardHeader>
                       <Badge variant="secondary" className="w-fit">
                         {formatWeekLabel(edition.editionWeek)}
                       </Badge>
-                      <CardTitle>The AI week in Asia</CardTitle>
-                      <CardDescription>
-                        {edition.publishedAt ? formatDate(edition.publishedAt) : edition.editionWeek}
+                      <CardTitle className="text-xl font-semibold leading-snug">
+                        The AI week in Asia
+                      </CardTitle>
+                      <CardDescription className="flex flex-col gap-3 text-sm">
+                        <span>
+                          {edition.publishedAt
+                            ? formatPostDate(edition.publishedAt)
+                            : edition.editionWeek}
+                        </span>
+                        {edition.lede[0] && (
+                          <span className="text-foreground/80">
+                            {getPostExcerpt(edition.lede.join(' '))}
+                          </span>
+                        )}
                       </CardDescription>
                     </CardHeader>
                   </Card>
@@ -48,41 +71,39 @@ export default async function ArchivePage() {
         </section>
 
         <section>
-          <h2 className="mb-3 font-heading text-xl font-semibold">Archive (v1)</h2>
-          <p className="mb-6 text-sm leading-6 text-muted-foreground">
+          <h2 className="mb-3 font-heading text-lg font-semibold">Archive (v1)</h2>
+          <p className="mb-10 text-sm leading-7 text-muted-foreground">
             These posts are from the earlier Edge Daily site. That version covered AI, Web3,
             Fintech and Energy. They are kept here so old links still work.
           </p>
           {posts.length === 0 ? (
-            <EmptyState title="Archive is empty" body="The v1 import has not been run yet." />
+            <PostsEmpty
+              title="Archive is empty."
+              description="The v1 import has not been run yet."
+            />
           ) : (
-            <div className="flex flex-col gap-4">
-              {posts.map((post) => (
-                <Link key={post.id} href={`/archive/v1/${post.legacySlug}`}>
-                  <Card className="transition-colors hover:bg-muted/40">
-                    <CardHeader>
-                      <Badge variant="secondary" className="w-fit">
-                        {post.theme}
-                      </Badge>
-                      <CardTitle className="text-xl leading-snug">{post.title}</CardTitle>
-                      <CardDescription>{formatDate(post.date)}</CardDescription>
-                    </CardHeader>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+            <ArchiveV1List
+              posts={posts.map((post) => ({
+                id: post.id,
+                slug: post.legacySlug,
+                theme: post.theme,
+                title: post.title,
+                content: post.content,
+                date: String(post.date),
+              }))}
+            />
           )}
         </section>
-      </main>
+      </PageShell>
     )
   } catch {
     return (
-      <main className="mx-auto max-w-[720px] px-8 py-16">
-        <EmptyState
+      <PageShell>
+        <PostsEmpty
           title="The archive could not be loaded"
-          body="The database is not reachable right now. This is an error, not an empty list."
+          description="The database is not reachable right now. This is an error, not an empty list."
         />
-      </main>
+      </PageShell>
     )
   }
 }

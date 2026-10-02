@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import Breadcrumbs from '@/components/breadcrumbs'
 import EditionViewBlock from '@/components/edition-view'
+import PageShell from '@/components/page-shell'
 import { getEditionByWeek } from '@/lib/queries/editions'
+import { formatWeekLabel } from '@/lib/utils'
 import { site } from '../../../../config/site'
 
 export async function generateMetadata({
@@ -30,9 +33,17 @@ export default async function EditionPage({
   const { week } = await params
   const edition = await getEditionByWeek(week).catch(() => null)
   if (!edition) notFound()
+
   return (
-    <main className="mx-auto max-w-[720px] px-8 py-16">
+    <PageShell>
+      <Breadcrumbs
+        items={[
+          { label: 'Home', to: '/' },
+          { label: 'Archive', to: '/archive' },
+          { label: formatWeekLabel(edition.editionWeek) },
+        ]}
+      />
       <EditionViewBlock edition={edition} />
-    </main>
+    </PageShell>
   )
 }

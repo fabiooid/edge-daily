@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import Breadcrumbs from '@/components/breadcrumbs'
+import PageShell from '@/components/page-shell'
 import { getEditionByWeek } from '@/lib/queries/editions'
 import { paragraphs } from '@/lib/utils'
 
@@ -35,40 +37,68 @@ export default async function StoryPage({
   if (!edition || !story) notFound()
 
   return (
-    <main className="mx-auto max-w-[720px] px-8 py-16">
-      <p className="mb-8 text-sm">
-        <Link href={`/editions/${week}`} className="text-muted-foreground hover:text-foreground">
-          Back to the edition
-        </Link>
-      </p>
-      <article className="flex flex-col gap-6">
-        {story.isAsia && <Badge variant="outline" className="w-fit">Asia watch</Badge>}
-        <h1 className="font-heading text-4xl font-bold leading-tight">{story.headline}</h1>
-        {paragraphs(story.body).map((paragraph) => (
-          <p key={paragraph} className="text-base leading-7">
-            {paragraph}
-          </p>
-        ))}
-        <div className="rounded-lg bg-muted/60 px-4 py-3">
-          <p className="text-sm font-medium">Why it matters</p>
-          <p className="mt-1 text-sm leading-6">{story.whyItMatters}</p>
-        </div>
-        {story.asiaAngle && (
-          <div>
-            <p className="text-sm font-medium">Asia angle</p>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">{story.asiaAngle}</p>
-          </div>
-        )}
-        <ul className="flex flex-col gap-2 text-sm">
-          {story.citations.map((citation) => (
-            <li key={citation.url}>
-              <a href={citation.url} className="border-b border-foreground/20 pb-px hover:border-foreground">
-                {citation.title}
-              </a>
-            </li>
+    <PageShell>
+      <Breadcrumbs
+        items={[
+          { label: 'Home', to: '/' },
+          { label: formatWeekLabelSafe(week), to: `/editions/${week}` },
+          { label: story.headline },
+        ]}
+      />
+      <article className="flex flex-col gap-10">
+        <header className="flex flex-col gap-3">
+          <Badge variant="secondary" className="w-fit font-medium">
+            {story.isAsia ? 'Asia watch' : 'Story'}
+          </Badge>
+          <h1 className="font-heading text-4xl font-bold leading-tight tracking-tight">
+            {story.headline}
+          </h1>
+        </header>
+
+        <div className="flex flex-col gap-6 text-base leading-7">
+          {paragraphs(story.body).map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
           ))}
-        </ul>
+        </div>
+
+        <section className="flex flex-col gap-5">
+          <Separator />
+          <h2 className="font-heading text-lg font-semibold">Why it matters</h2>
+          <p className="text-base leading-7">{story.whyItMatters}</p>
+        </section>
+
+        {story.asiaAngle && (
+          <section className="flex flex-col gap-5">
+            <h2 className="font-heading text-lg font-semibold">Asia angle</h2>
+            <p className="text-base leading-7">{story.asiaAngle}</p>
+          </section>
+        )}
+
+        {story.citations.length > 0 && (
+          <section className="flex flex-col gap-5">
+            <Separator />
+            <h2 className="font-heading text-lg font-semibold">Further Reading</h2>
+            <ul className="flex flex-col gap-3">
+              {story.citations.map((citation) => (
+                <li key={citation.url}>
+                  <a
+                    href={citation.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="border-b border-foreground/20 pb-px text-[0.9375rem] transition-colors hover:border-foreground"
+                  >
+                    {citation.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </article>
-    </main>
+    </PageShell>
   )
+}
+
+function formatWeekLabelSafe(week: string): string {
+  return week.replace('-W', ' week ')
 }

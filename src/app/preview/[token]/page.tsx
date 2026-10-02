@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import Breadcrumbs from '@/components/breadcrumbs'
 import EditionViewBlock from '@/components/edition-view'
+import PageShell from '@/components/page-shell'
 import { getEditionByPreviewToken } from '@/lib/queries/editions'
 
 export const metadata: Metadata = {
@@ -18,11 +20,17 @@ export default async function PreviewPage({
   if (!edition) notFound()
 
   return (
-    <main className="mx-auto max-w-[720px] px-8 py-16">
-      <p className="mb-8 rounded-lg bg-muted px-4 py-3 text-sm">
+    <PageShell>
+      <Breadcrumbs
+        items={[
+          { label: 'Home', to: '/' },
+          { label: 'Preview' },
+        ]}
+      />
+      <p className="mb-10 text-sm text-muted-foreground">
         Private preview. Approval happens in Telegram, not on this page.
       </p>
       <EditionViewBlock edition={edition} preview />
-    </main>
+    </PageShell>
   )
 }
