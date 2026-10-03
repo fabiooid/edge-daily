@@ -2,9 +2,36 @@
 
 **Edge Weekly: the AI week in Asia.**
 
-A weekly briefing of the AI news that matters if you live or work in Asia. Ten minutes, once a week, published on Tuesday morning Hong Kong time.
+A weekly AI digest with an Asia angle. It explains the week of AI news that matters if you live or work in Asia.
 
-This repo is a rebuild of the old Edge Daily site. Milestone 1 is a working end-to-end weekly edition: a Next.js site, Postgres, a Node pipeline you run as a CLI, blocking checks before approval, and a Telegram approve / reject / request-changes flow.
+**Live demo coming soon**
+
+The MIT licence covers the code only, not the AI-written posts or the curated source list.
+
+## Why I built it
+
+I wanted a weekly briefing I would actually read: short, sourced, and written for people following AI from Asia, not only from the US West Coast. I also wanted a real pipeline with quality gates and a person in the loop, not a prompt that publishes itself.
+
+## How it works
+
+A multi-step pipeline, also wrapped as a Mastra workflow, builds each edition:
+
+1. **Ingest.** The run pulls from a vetted source list. About 90 sources sit in that list, including Asian outlets and the Hugging Face model-release API. This milestone turns on the Top 10 plus Hacker News as a signal. The rest are stored and paused.
+2. **Keep a 7-day window.** Code drops anything older than seven days. That window is enforced in ingest and compile, not only in a prompt.
+3. **Dedupe and rank.** Canonical URLs collapse duplicates. Ranking does not punish an Asia story just because it has no Hacker News attention.
+4. **Write with citations.** Each story is drafted with source links attached.
+5. **Blocking checks.** Before an edition can be approved, these checks must pass: freshness, a source floor, style, links that resolve, and edition shape (5 to 7 stories, at least two from Asia).
+6. **Telegram approval.** A person gets Approve, Reject and Request changes. Approve publishes the edition page. Manual approval is the default. Config also stores an auto-publish mode and thresholds, but those thresholds are not wired to publish yet.
+
+`npm test` runs 17 tests. GitHub Actions runs those tests and a production build on every push.
+
+## Stack
+
+Next.js and TypeScript for the site. Postgres for editions and sources. Mastra for the ingest-then-compile workflow. Telegram for human approval. Railway is the planned host.
+
+## How this was built
+
+I designed the product, the Asia brief, the source mix, the quality gates and the approval step. I built this milestone with Cursor's coding agent and reviewed the code.
 
 ## What you need to set up by hand
 
