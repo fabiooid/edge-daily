@@ -3,12 +3,19 @@ import { cn } from '@/lib/utils'
 
 interface PageShellProps {
   className?: string
+  width?: 'wide' | 'article'
   children: ReactNode
 }
 
-export default function PageShell({ className, children }: PageShellProps) {
+export default function PageShell({ className, width = 'wide', children }: PageShellProps) {
   return (
-    <main className={cn('mx-auto max-w-[720px] px-8 py-16', className)}>
+    <main
+      className={cn(
+        'mx-auto w-full px-5 py-10 md:px-8 md:py-14',
+        width === 'wide' ? 'max-w-[1180px]' : 'max-w-[1180px]',
+        className,
+      )}
+    >
       {children}
     </main>
   )

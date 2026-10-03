@@ -132,6 +132,20 @@
   }
 }
 
+.prose-article {
+  font-size: 1.125rem;
+  line-height: 1.8;
+}
+
+.prose-article a {
+  text-underline-offset: 3px;
+}
+
+.prose-article blockquote {
+  font-style: normal;
+  border-left-color: var(--foreground);
+}
+
 .prose {
   --tw-prose-body: var(--foreground);
   --tw-prose-headings: var(--foreground);

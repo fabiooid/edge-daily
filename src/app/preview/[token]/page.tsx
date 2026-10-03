@@ -21,20 +21,20 @@ export default async function PreviewPage({
   if (!edition) notFound()
 
   return (
-    <PageShell>
-      <Breadcrumbs
-        items={[
-          { label: 'Home', to: '/' },
-          { label: 'Preview' },
-        ]}
-      />
-      <div className="mb-10">
+    <>
+      <PageShell className="pb-0">
+        <Breadcrumbs
+          items={[
+            { label: 'Home', to: '/' },
+            { label: 'Preview' },
+          ]}
+        />
         <StatusAlert
           title="Private preview"
           description="Approval happens in Telegram, not on this page."
         />
-      </div>
+      </PageShell>
       <EditionViewBlock edition={edition} preview />
-    </PageShell>
+    </>
   )
 }

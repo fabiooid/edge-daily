@@ -35,15 +35,17 @@ export default async function EditionPage({
   if (!edition) notFound()
 
   return (
-    <PageShell>
-      <Breadcrumbs
-        items={[
-          { label: 'Home', to: '/' },
-          { label: 'Archive', to: '/archive' },
-          { label: formatWeekLabel(edition.editionWeek) },
-        ]}
-      />
+    <>
+      <PageShell className="pb-0">
+        <Breadcrumbs
+          items={[
+            { label: 'Home', to: '/' },
+            { label: 'Archive', to: '/archive' },
+            { label: formatWeekLabel(edition.editionWeek) },
+          ]}
+        />
+      </PageShell>
       <EditionViewBlock edition={edition} />
-    </PageShell>
+    </>
   )
 }

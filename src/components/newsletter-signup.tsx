@@ -2,12 +2,18 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import StatusAlert from '@/components/status-alert'
+import { cn } from '@/lib/utils'
 
-export default function NewsletterSignup() {
+export default function NewsletterSignup({
+  compact = false,
+  idPrefix = 'newsletter',
+}: {
+  compact?: boolean
+  idPrefix?: string
+}) {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'saving' | 'ok' | 'error'>('idle')
   const [message, setMessage] = useState('')
@@ -37,35 +43,30 @@ export default function NewsletterSignup() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Get the Tuesday briefing</CardTitle>
-        <CardDescription>
-          One short email a week. The AI week in Asia, in plain language.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <form onSubmit={onSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="grid flex-1 gap-2">
-            <Label htmlFor="newsletter-email">Email</Label>
-            <Input
-              id="newsletter-email"
-              type="email"
-              name="email"
-              required
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </div>
-          <Button type="submit" disabled={status === 'saving'}>
-            {status === 'saving' ? 'Saving...' : 'Subscribe'}
-          </Button>
-        </form>
-        {status === 'ok' && <StatusAlert tone="empty" title="Saved" description={message} />}
-        {status === 'error' && <StatusAlert tone="error" title="Could not subscribe" description={message} />}
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-4">
+      <form
+        onSubmit={onSubmit}
+        className={cn('flex flex-col gap-3', compact ? '' : 'sm:flex-row sm:items-end')}
+      >
+        <div className="grid flex-1 gap-2">
+          <Label htmlFor={`${idPrefix}-email`}>Email</Label>
+          <Input
+            id={`${idPrefix}-email`}
+            type="email"
+            name="email"
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </div>
+        <Button type="submit" disabled={status === 'saving'}>
+          {status === 'saving' ? 'Saving...' : 'Subscribe'}
+        </Button>
+      </form>
+      {status === 'ok' && <StatusAlert tone="empty" title="Saved" description={message} />}
+      {status === 'error' && <StatusAlert tone="error" title="Could not subscribe" description={message} />}
+    </div>
   )
 }

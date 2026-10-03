@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import EditionViewBlock from '@/components/edition-view'
+import HomeMagazine from '@/components/home-magazine'
 import PageShell from '@/components/page-shell'
 import StatusAlert from '@/components/status-alert'
 import { getLatestPublishedEdition } from '@/lib/queries/editions'
@@ -37,9 +37,5 @@ export default async function HomePage() {
     )
   }
 
-  return (
-    <PageShell>
-      <EditionViewBlock edition={edition} />
-    </PageShell>
-  )
+  return <HomeMagazine edition={edition} />
 }

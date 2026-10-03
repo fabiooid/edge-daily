@@ -203,9 +203,13 @@ src/lib/pipeline/sources/   rss, huggingface, hackernews, x, scrape stub
 
 The public pages follow patterns from these MIT-licensed projects. Their code was adapted, not copied as a theme. Colours and fonts stay the original Edge Daily look (Geist, Notion-style tokens).
 
-- [shadcn/ui](https://ui.shadcn.com) and its official blocks (MIT) for Card, Badge, Button, Separator, Breadcrumb, Pagination, ToggleGroup, Sheet, Alert, Input, Skeleton, and the form field layout
-- [taxonomy](https://github.com/shadcn-ui/taxonomy) by shadcn (MIT) for the reading layout: large heading, “Published on” date, and Tailwind `prose`
-- [Magic UI blog template](https://github.com/magicuidesign/blog-template) (MIT) for the edition hero, tag/theme chips, and archive card grid
-- [Magic UI](https://github.com/magicuidesign/magicui) (MIT) for the newsletter signup card (email field plus subscribe button)
+- [shadcn/ui](https://ui.shadcn.com) (MIT) for Card, Badge, Button, Separator, Breadcrumb, Pagination, ToggleGroup, Sheet, Alert, Input, Label, and Skeleton
+- [timlrx/tailwind-nextjs-starter-blog](https://github.com/timlrx/tailwind-nextjs-starter-blog) (MIT) for the wide list layout, search, previous/next story nav, and article masthead
+- [taxonomy](https://github.com/shadcn-ui/taxonomy) by shadcn (MIT) for the reading column and Tailwind `prose`
+- [Magic UI blog template](https://github.com/magicuidesign/blog-template) (MIT) for the featured lead, tag chips, and image-card grid
+- [Magic UI](https://github.com/magicuidesign/magicui) (MIT) for the newsletter signup band
+- Vercel’s Next.js blog starter (MIT) for a sticky blurred header and a footer with about / nav / follow columns
+
+Look-and-feel notes also came from publications such as Rest of World, The Verge, TLDR and Morning Brew. No code was copied from those sites.
 
 No non-permissive templates were used.
