@@ -5,7 +5,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import ArchiveV1List from '@/components/archive-v1-list'
 import Breadcrumbs from '@/components/breadcrumbs'
 import PageShell from '@/components/page-shell'
-import PostsEmpty from '@/components/posts-empty'
+import StatusAlert from '@/components/status-alert'
 import { getArchivePosts, getPublishedEditions } from '@/lib/queries/editions'
 import { formatPostDate, formatWeekLabel, getPostExcerpt } from '@/lib/utils'
 
@@ -27,22 +27,22 @@ export default async function ArchivePage() {
           ]}
         />
 
-        <h1 className="mb-10 font-heading text-4xl font-bold tracking-tight">
+        <h1 className="mb-10 font-heading text-4xl font-bold tracking-tight lg:text-5xl">
           Archive
         </h1>
 
         <section className="mb-16">
           <h2 className="mb-10 font-heading text-lg font-semibold">Weekly editions</h2>
           {editions.length === 0 ? (
-            <PostsEmpty
+            <StatusAlert
               title="No weekly editions yet."
               description="Approved Tuesday editions will show up here."
             />
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {editions.map((edition) => (
-                <Link key={edition.id} href={`/editions/${edition.editionWeek}`} className="block">
-                  <Card className="transition-colors hover:bg-muted/40">
+                <Link key={edition.id} href={`/editions/${edition.editionWeek}`} className="block h-full">
+                  <Card className="h-full transition-colors hover:bg-muted">
                     <CardHeader>
                       <Badge variant="secondary" className="w-fit">
                         {formatWeekLabel(edition.editionWeek)}
@@ -56,11 +56,7 @@ export default async function ArchivePage() {
                             ? formatPostDate(edition.publishedAt)
                             : edition.editionWeek}
                         </span>
-                        {edition.lede[0] && (
-                          <span className="text-foreground/80">
-                            {getPostExcerpt(edition.lede.join(' '))}
-                          </span>
-                        )}
+                        {edition.lede[0] && <span>{getPostExcerpt(edition.lede.join(' '))}</span>}
                       </CardDescription>
                     </CardHeader>
                   </Card>
@@ -77,7 +73,7 @@ export default async function ArchivePage() {
             Fintech and Energy. They are kept here so old links still work.
           </p>
           {posts.length === 0 ? (
-            <PostsEmpty
+            <StatusAlert
               title="Archive is empty."
               description="The v1 import has not been run yet."
             />
@@ -99,7 +95,8 @@ export default async function ArchivePage() {
   } catch {
     return (
       <PageShell>
-        <PostsEmpty
+        <StatusAlert
+          tone="error"
           title="The archive could not be loaded"
           description="The database is not reachable right now. This is an error, not an empty list."
         />

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import EditionViewBlock from '@/components/edition-view'
 import PageShell from '@/components/page-shell'
-import PostsEmpty from '@/components/posts-empty'
+import StatusAlert from '@/components/status-alert'
 import { getLatestPublishedEdition } from '@/lib/queries/editions'
 import { site } from '../../config/site'
 
@@ -17,7 +17,8 @@ export default async function HomePage() {
   } catch {
     return (
       <PageShell>
-        <PostsEmpty
+        <StatusAlert
+          tone="error"
           title="The site could not load this edition"
           description="The database is not reachable right now. This is an error, not an empty archive. Try again in a few minutes."
         />
@@ -28,7 +29,10 @@ export default async function HomePage() {
   if (!edition) {
     return (
       <PageShell>
-        <PostsEmpty />
+        <StatusAlert
+          title="No weekly edition is live yet."
+          description="The first Edge Weekly issue publishes after it is approved. Check back on a Tuesday morning Hong Kong time."
+        />
       </PageShell>
     )
   }

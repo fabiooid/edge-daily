@@ -19,7 +19,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from '@/components/ui/toggle-group'
-import PostsEmpty from '@/components/posts-empty'
+import StatusAlert from '@/components/status-alert'
 import {
   formatPostDate,
   getPostExcerpt,
@@ -27,7 +27,7 @@ import {
   V1_THEMES,
 } from '@/lib/utils'
 
-const POSTS_PER_PAGE = 5
+const POSTS_PER_PAGE = 6
 
 export type ArchivePostItem = {
   id: string
@@ -81,10 +81,10 @@ export default function ArchiveV1List({ posts }: { posts: ArchivePostItem[] }) {
       </ToggleGroup>
 
       {paginatedPosts.length > 0 ? (
-        <div className="flex flex-col gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           {paginatedPosts.map((post) => (
-            <Link key={post.id} href={`/archive/v1/${post.slug}`} className="block">
-              <Card className="transition-colors hover:bg-muted/40">
+            <Link key={post.id} href={`/archive/v1/${post.slug}`} className="block h-full">
+              <Card className="h-full transition-colors hover:bg-muted">
                 <CardHeader>
                   <Badge variant="secondary" className="w-fit">
                     {themeLabel(post.theme)}
@@ -94,9 +94,7 @@ export default function ArchiveV1List({ posts }: { posts: ArchivePostItem[] }) {
                   </CardTitle>
                   <CardDescription className="flex flex-col gap-3 text-sm">
                     <span>{formatPostDate(post.date)}</span>
-                    <span className="text-foreground/80">
-                      {getPostExcerpt(post.content)}
-                    </span>
+                    <span>{getPostExcerpt(post.content)}</span>
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -104,7 +102,7 @@ export default function ArchiveV1List({ posts }: { posts: ArchivePostItem[] }) {
           ))}
         </div>
       ) : (
-        <PostsEmpty
+        <StatusAlert
           title="No posts in this filter."
           description="Try another theme, or check back after the next import."
         />

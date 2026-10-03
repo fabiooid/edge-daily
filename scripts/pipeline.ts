@@ -63,8 +63,10 @@ Railway cron: set PROCESS_ROLE=pipeline and PIPELINE_JOB=ingest|compile|remind
   if (job === 'compile') {
     const result = await compileEdition({ mock, dryRun, publishDemo })
     console.log(JSON.stringify(result, null, 2))
-    if (!dryRun && !publishDemo) {
+    if (!dryRun && !publishDemo && !result.autoPublished) {
       await sendPreview(result.editionId, result.editionWeek, result.previewToken, result.passed)
+    } else if (result.autoPublished) {
+      console.log(`Auto-published ${result.editionWeek}: ${result.publishReason}`)
     }
     return
   }

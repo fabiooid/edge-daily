@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
   if (job === 'compile') {
     const result = await compileEdition({ mock: body.mock })
-    if (result.passed) {
+    if (result.passed && !result.autoPublished) {
       await sendTelegramPreview({
         editionWeek: result.editionWeek,
         storyCount: result.storyCount,

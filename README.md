@@ -163,7 +163,7 @@ Before an edition can be approved, these blocking checks must pass:
 - Links resolve (skipped only in mock mode)
 - Edition shape (5 to 7 stories, at least two from Asia)
 
-Telegram buttons: Approve, Reject, Request changes. Approve publishes the edition page. `PUBLISH_MODE=manual` is the default.
+Telegram buttons: Approve, Reject, Request changes. Approve publishes the edition page. `PUBLISH_MODE=manual` is the default. `PUBLISH_MODE=auto` publishes only when the configured eval thresholds are met. Otherwise it falls back to Telegram approval.
 
 ## Tests
 
@@ -198,3 +198,14 @@ src/app/                Next.js pages, RSS, sitemap, webhooks
 src/lib/pipeline/       ingest, filters, rank, write, checks
 src/lib/pipeline/sources/   rss, huggingface, hackernews, x, scrape stub
 ```
+
+## Design credits
+
+The public pages follow patterns from these MIT-licensed projects. Their code was adapted, not copied as a theme. Colours and fonts stay the original Edge Daily look (Geist, Notion-style tokens).
+
+- [shadcn/ui](https://ui.shadcn.com) and its official blocks (MIT) for Card, Badge, Button, Separator, Breadcrumb, Pagination, ToggleGroup, Sheet, Alert, Input, Skeleton, and the form field layout
+- [taxonomy](https://github.com/shadcn-ui/taxonomy) by shadcn (MIT) for the reading layout: large heading, “Published on” date, and Tailwind `prose`
+- [Magic UI blog template](https://github.com/magicuidesign/blog-template) (MIT) for the edition hero, tag/theme chips, and archive card grid
+- [Magic UI](https://github.com/magicuidesign/magicui) (MIT) for the newsletter signup card (email field plus subscribe button)
+
+No non-permissive templates were used.

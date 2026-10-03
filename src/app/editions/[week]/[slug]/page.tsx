@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Breadcrumbs from '@/components/breadcrumbs'
+import FurtherReading from '@/components/further-reading'
 import PageShell from '@/components/page-shell'
 import { getEditionByWeek } from '@/lib/queries/editions'
-import { paragraphs } from '@/lib/utils'
+import { formatWeekLabel, paragraphs } from '@/lib/utils'
 
 export async function generateMetadata({
   params,
@@ -41,7 +42,7 @@ export default async function StoryPage({
       <Breadcrumbs
         items={[
           { label: 'Home', to: '/' },
-          { label: formatWeekLabelSafe(week), to: `/editions/${week}` },
+          { label: formatWeekLabel(week), to: `/editions/${week}` },
           { label: story.headline },
         ]}
       />
@@ -50,55 +51,31 @@ export default async function StoryPage({
           <Badge variant="secondary" className="w-fit font-medium">
             {story.isAsia ? 'Asia watch' : 'Story'}
           </Badge>
-          <h1 className="font-heading text-4xl font-bold leading-tight tracking-tight">
+          <h1 className="font-heading text-4xl font-bold leading-tight tracking-tight lg:text-5xl">
             {story.headline}
           </h1>
         </header>
-
-        <div className="flex flex-col gap-6 text-base leading-7">
+        <div className="prose prose-neutral dark:prose-invert max-w-none">
           {paragraphs(story.body).map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
         </div>
-
-        <section className="flex flex-col gap-5">
-          <Separator />
-          <h2 className="font-heading text-lg font-semibold">Why it matters</h2>
-          <p className="text-base leading-7">{story.whyItMatters}</p>
-        </section>
-
-        {story.asiaAngle && (
-          <section className="flex flex-col gap-5">
-            <h2 className="font-heading text-lg font-semibold">Asia angle</h2>
-            <p className="text-base leading-7">{story.asiaAngle}</p>
-          </section>
-        )}
-
-        {story.citations.length > 0 && (
-          <section className="flex flex-col gap-5">
-            <Separator />
-            <h2 className="font-heading text-lg font-semibold">Further Reading</h2>
-            <ul className="flex flex-col gap-3">
-              {story.citations.map((citation) => (
-                <li key={citation.url}>
-                  <a
-                    href={citation.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="border-b border-foreground/20 pb-px text-[0.9375rem] transition-colors hover:border-foreground"
-                  >
-                    {citation.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Why it matters</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 text-base leading-7">
+            <p>{story.whyItMatters}</p>
+            {story.asiaAngle && (
+              <p>
+                <span className="font-medium">Asia angle. </span>
+                {story.asiaAngle}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        <FurtherReading links={story.citations} />
       </article>
     </PageShell>
   )
-}
-
-function formatWeekLabelSafe(week: string): string {
-  return week.replace('-W', ' week ')
 }

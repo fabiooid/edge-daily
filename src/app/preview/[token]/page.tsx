@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Breadcrumbs from '@/components/breadcrumbs'
 import EditionViewBlock from '@/components/edition-view'
 import PageShell from '@/components/page-shell'
+import StatusAlert from '@/components/status-alert'
 import { getEditionByPreviewToken } from '@/lib/queries/editions'
 
 export const metadata: Metadata = {
@@ -27,9 +28,12 @@ export default async function PreviewPage({
           { label: 'Preview' },
         ]}
       />
-      <p className="mb-10 text-sm text-muted-foreground">
-        Private preview. Approval happens in Telegram, not on this page.
-      </p>
+      <div className="mb-10">
+        <StatusAlert
+          title="Private preview"
+          description="Approval happens in Telegram, not on this page."
+        />
+      </div>
       <EditionViewBlock edition={edition} preview />
     </PageShell>
   )

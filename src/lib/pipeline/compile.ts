@@ -1,12 +1,13 @@
-import { and, eq, gte, isNotNull, lte } from 'drizzle-orm'
+import { and, desc, eq, gte, isNotNull, lte, ne } from 'drizzle-orm'
 import { models } from '../../../config/models'
 import { pipelineConfig } from '../../../config/pipeline'
-import { publishDefaults } from '../../../config/publish'
 import { getDb } from '../db'
 import {
+  approvals,
   citations,
   editionStories,
   editions,
+  edits,
   evalResults,
   evalRuns,
   items,
@@ -16,6 +17,11 @@ import {
   storyItems,
 } from '../db/schema'
 import { hashId, id, previewToken, slugify } from '../ids'
+import {
+  decideCompileStatus,
+  resolvePublishSettings,
+  type HistoryEdition,
+} from './auto-publish'
 import { runBlockingChecks, type StoryInput } from './checks'
 import { rankItems, pickTopStories, type RankableItem } from './rank'
 import { writeStories } from './write'
@@ -36,19 +42,47 @@ export type CompileResult = {
   previewToken: string
   storyCount: number
   passed: boolean
+  autoPublished: boolean
+  publishReason: string
   checks: { name: string; passed: boolean; detail: string }[]
 }
 
-async function publishMode(): Promise<string> {
+async function loadPublishSettings() {
   try {
     const db = await getDb()
     const rows = await db.select().from(settings).where(eq(settings.key, 'publish'))
-    const mode = rows[0]?.value?.mode
-    if (mode === 'auto' || mode === 'manual') return mode
+    return resolvePublishSettings(rows[0]?.value)
   } catch {
-    // fall through to config
+    return resolvePublishSettings()
   }
-  return publishDefaults.mode
+}
+
+async function loadEditionHistory(editionWeek: string): Promise<HistoryEdition[]> {
+  const db = await getDb()
+  const rows = await db
+    .select()
+    .from(editions)
+    .where(ne(editions.editionWeek, editionWeek))
+    .orderBy(desc(editions.createdAt))
+
+  const history: HistoryEdition[] = []
+  for (const row of rows) {
+    const [run] = await db
+      .select()
+      .from(evalRuns)
+      .where(eq(evalRuns.editionId, row.id))
+      .orderBy(desc(evalRuns.createdAt))
+    const editRows = await db.select().from(edits).where(eq(edits.editionId, row.id))
+    const changeRows = await db
+      .select()
+      .from(approvals)
+      .where(and(eq(approvals.editionId, row.id), eq(approvals.action, 'request_changes')))
+    history.push({
+      evalPassed: Boolean(run?.passed),
+      edited: editRows.length > 0 || changeRows.length > 0,
+    })
+  }
+  return history
 }
 
 export async function compileEdition(options: CompileOptions = {}): Promise<CompileResult> {
@@ -57,7 +91,8 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
   const db = await getDb()
   const hk = hongKongDateParts(compileAt)
   const editionWeek = hk.isoWeek
-  const mode = await publishMode()
+  const publishSettings = await loadPublishSettings()
+  const mode = publishSettings.mode
 
   const rows = await db
     .select({
@@ -121,17 +156,27 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
   const token = previewToken()
   const editionId = hashId('ed', editionWeek)
   const existing = await db.select().from(editions).where(eq(editions.editionWeek, editionWeek))
+  const history = await loadEditionHistory(editionWeek)
+  const decision = options.publishDemo
+    ? { status: 'published' as const, reason: 'demo publish', autoPublished: false }
+    : decideCompileStatus({
+        mode,
+        killSwitch: publishSettings.killSwitch,
+        checksPassed: checks.passed,
+        autoFallbackToReview: publishSettings.autoFallbackToReview,
+        autoRequires: publishSettings.autoRequires,
+        history,
+      })
 
   if (existing[0]) {
     await db.delete(editionStories).where(eq(editionStories.editionId, existing[0].id))
     await db.delete(evalRuns).where(eq(evalRuns.editionId, existing[0].id))
   }
 
-  const status = options.publishDemo
-    ? 'published'
-    : checks.passed
-      ? 'in_review'
-      : 'draft'
+  const status = decision.status
+  const publishedAt = status === 'published' ? compileAt : null
+  const approvedBy = decision.autoPublished ? 'auto' : options.publishDemo ? 'demo' : null
+  const approvedAt = status === 'published' ? compileAt : null
 
   await db
     .insert(editions)
@@ -145,7 +190,9 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
       modeUsed: mode,
       previewToken: existing[0]?.previewToken || token,
       lede: checks.surviving.slice(0, 5).map((story) => story.headline),
-      publishedAt: options.publishDemo ? compileAt : null,
+      publishedAt,
+      approvedBy,
+      approvedAt,
       configSnapshot: {
         models,
         freshnessDays: pipelineConfig.freshnessDays,
@@ -160,7 +207,9 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
         status,
         modeUsed: mode,
         lede: checks.surviving.slice(0, 5).map((story) => story.headline),
-        publishedAt: options.publishDemo ? compileAt : null,
+        publishedAt,
+        approvedBy,
+        approvedAt,
         configSnapshot: {
           models,
           freshnessDays: pipelineConfig.freshnessDays,
@@ -244,6 +293,8 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
     previewToken: saved[0]?.previewToken || token,
     storyCount: checks.surviving.length,
     passed: checks.passed,
+    autoPublished: decision.autoPublished,
+    publishReason: decision.reason,
     checks: checks.results.map((result) => ({
       name: result.name,
       passed: result.passed,
