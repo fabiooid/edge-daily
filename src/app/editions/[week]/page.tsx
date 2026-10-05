@@ -4,7 +4,7 @@ import Breadcrumbs from '@/components/breadcrumbs'
 import EditionViewBlock from '@/components/edition-view'
 import PageShell from '@/components/page-shell'
 import { getEditionByWeek } from '@/lib/queries/editions'
-import { formatWeekLabel } from '@/lib/utils'
+import { formatWeekDisplay } from '@/lib/story-meta'
 import { site } from '../../../../config/site'
 
 export async function generateMetadata({
@@ -16,10 +16,10 @@ export async function generateMetadata({
   const edition = await getEditionByWeek(week).catch(() => null)
   if (!edition) return { title: 'Edition not found' }
   return {
-    title: `${site.subtitle}, ${edition.editionWeek}`,
+    title: `${site.name} ${formatWeekDisplay(edition.editionWeek)}`,
     description: edition.lede.join(' '),
     openGraph: {
-      title: `${site.name} ${edition.editionWeek}`,
+      title: `${site.name} ${formatWeekDisplay(edition.editionWeek)}`,
       description: edition.lede[0] || site.description,
     },
   }
@@ -41,7 +41,7 @@ export default async function EditionPage({
           items={[
             { label: 'Home', to: '/' },
             { label: 'Archive', to: '/archive' },
-            { label: formatWeekLabel(edition.editionWeek) },
+            { label: formatWeekDisplay(edition.editionWeek) },
           ]}
         />
       </PageShell>

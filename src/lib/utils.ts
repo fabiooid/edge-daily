@@ -1,12 +1,14 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
+import { formatWeekDisplay } from './story-meta'
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 export function formatWeekLabel(week: string): string {
-  return week.replace('-W', ' week ')
+  return formatWeekDisplay(week)
 }
 
 export function formatPostDate(date?: string | Date | null): string {
@@ -35,20 +37,6 @@ export function paragraphs(text: string): string[] {
     .split(/\n\s*\n/)
     .map((part) => part.trim())
     .filter(Boolean)
-}
-
-export const V1_THEMES = ['AI', 'Web3', 'Fintech', 'Energy'] as const
-
-const THEME_EMOJIS: Record<string, string> = {
-  AI: '🤖',
-  Web3: '🌐',
-  Fintech: '💳',
-  Energy: '⚡',
-}
-
-export function themeLabel(theme: string): string {
-  const emoji = THEME_EMOJIS[theme]
-  return emoji ? `${emoji} ${theme}` : theme
 }
 
 export function getPostExcerpt(content?: string | null, maxLength = 150): string {

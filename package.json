@@ -13,7 +13,6 @@
     "pipeline": "tsx scripts/pipeline.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed-sources": "tsx scripts/seed-sources.ts",
-    "db:import-archive": "tsx scripts/import-archive.ts",
     "demo": "tsx scripts/demo.ts"
   },
   "dependencies": {

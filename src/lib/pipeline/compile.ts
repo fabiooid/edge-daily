@@ -26,6 +26,7 @@ import { runBlockingChecks, type StoryInput } from './checks'
 import { rankItems, pickTopStories, type RankableItem } from './rank'
 import { writeStories } from './write'
 import { freshnessWindow, hongKongDateParts, nextTuesdayEightHkt } from './window'
+import { resolveMeridianWeek, snapshotIsoWeek } from './week'
 
 export type CompileOptions = {
   mock?: boolean
@@ -90,7 +91,20 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
   const window = freshnessWindow(compileAt)
   const db = await getDb()
   const hk = hongKongDateParts(compileAt)
-  const editionWeek = hk.isoWeek
+  const isoWeek = hk.isoWeek
+  const priorEditions = await db
+    .select({
+      editionWeek: editions.editionWeek,
+      configSnapshot: editions.configSnapshot,
+    })
+    .from(editions)
+  const editionWeek = resolveMeridianWeek(
+    priorEditions.map((row) => ({
+      editionWeek: row.editionWeek,
+      isoWeek: snapshotIsoWeek(row.configSnapshot),
+    })),
+    isoWeek,
+  )
   const publishSettings = await loadPublishSettings()
   const mode = publishSettings.mode
 
@@ -221,6 +235,7 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
         models,
         freshnessDays: pipelineConfig.freshnessDays,
         mock: Boolean(options.mock || options.dryRun),
+        isoWeek,
       },
     })
     .onConflictDoUpdate({
@@ -238,6 +253,7 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
           models,
           freshnessDays: pipelineConfig.freshnessDays,
           mock: Boolean(options.mock || options.dryRun),
+          isoWeek,
         },
       },
     })

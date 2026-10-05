@@ -87,6 +87,7 @@ export function formatLongDate(date?: string | Date | null): string {
 }
 
 export function formatWeekDisplay(week: string): string {
+  if (/^[1-9]\d*$/.test(week)) return `Week ${week}`
   const [year, rest] = week.split('-W')
   return rest ? `Week ${Number(rest)} · ${year}` : week
 }

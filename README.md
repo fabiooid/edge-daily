@@ -13,7 +13,7 @@ This repo is a rebuild of the old Edge Daily site. Milestone 1 is a working end-
 3. Create an Anthropic API key.
 4. Set the env vars below on the Railway web service and on the Railway cron service.
 5. Point the Telegram webhook at `https://YOUR-RAILWAY-HOST/api/telegram/webhook` with a secret token header.
-6. Run migrate, seed sources, and import the v1 archive once.
+6. Run migrate and seed sources once.
 7. If you still have the old Vercel project, switch it only after Railway is live. Vercel is optional.
 
 ## Deploy on Railway (primary)
@@ -45,7 +45,6 @@ PROCESS_ROLE=web
 ```bash
 npm run db:migrate
 npm run db:seed-sources
-npm run db:import-archive
 ```
 
 ### 2. Pipeline cron service
@@ -100,7 +99,7 @@ npm run demo
 npm run dev
 ```
 
-`npm run demo` migrates, seeds the vetted sources, imports the cleaned v1 archive, and publishes a mock weekly edition so you can click through the site without API keys.
+`npm run demo` migrates, seeds the vetted sources, and publishes a mock Week 1 edition so you can click through the site without API keys.
 
 ### Pipeline CLI
 
@@ -142,16 +141,9 @@ Supported source types:
 - X, behind `FEATURE_X_SOURCES`, seeded with 25 accounts and search queries, all paused
 - Scrape / email placeholders so a later adapter can plug in
 
-## Archive import
+## Historical posts
 
-`npm run db:import-archive` is safe to run more than once.
-
-It imports the real Edge Daily posts and skips:
-
-- the 16 seed / duplicate rows dated 23 Feb to 5 Mar 2026
-- the 6 April DeepSeek post, which had the launch year wrong
-
-Old `/post/:slug` links redirect to `/archive/v1/:slug`.
+Meridian starts at Week 1. The earlier Edge Daily posts were deliberately not carried over. Old `/post/:slug` and `/archive/v1/:slug` links now go to the weekly archive.
 
 ## Checks and approval
 
@@ -191,7 +183,7 @@ There is no Vercel-only cache or image API in this app. Pages render from Postgr
 
 ```
 config/                 models, publish mode, source lists
-data/                   vetted sources and v1 archive
+data/                   vetted sources
 drizzle/migrations/     Postgres + pgvector schema
 scripts/pipeline.ts     CLI used by Railway cron
 src/app/                Next.js pages, RSS, sitemap, webhooks

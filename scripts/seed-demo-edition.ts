@@ -1,8 +1,7 @@
-import { closeDb, getDb } from '../src/lib/db'
+import { closeDb, execScript, getDb } from '../src/lib/db'
 import { items, sources } from '../src/lib/db/schema'
 import { hashId } from '../src/lib/ids'
 import { compileEdition } from '../src/lib/pipeline/compile'
-import { eq } from 'drizzle-orm'
 
 const DEMO_STORIES = [
   {
@@ -49,8 +48,22 @@ const DEMO_STORIES = [
   },
 ]
 
+async function resetPublishedEditions() {
+  await execScript(`
+    DELETE FROM citations;
+    DELETE FROM eval_results;
+    DELETE FROM eval_runs;
+    DELETE FROM edition_stories;
+    DELETE FROM approvals;
+    DELETE FROM edits;
+    DELETE FROM editions;
+    DELETE FROM posts_archive;
+  `)
+}
+
 async function main() {
   const db = await getDb()
+  await resetPublishedEditions()
   const compileAt = new Date()
   const publishedAt = new Date(compileAt.getTime() - 2 * 24 * 60 * 60 * 1000)
 

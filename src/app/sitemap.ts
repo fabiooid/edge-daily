@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { siteUrl } from '../../config/site'
-import { getArchivePosts, getPublishedEditions } from '@/lib/queries/editions'
+import { getPublishedEditions } from '@/lib/queries/editions'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl()
@@ -11,7 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   try {
-    const [editions, posts] = await Promise.all([getPublishedEditions(), getArchivePosts()])
+    const editions = await getPublishedEditions()
     for (const edition of editions) {
       entries.push({
         url: `${base}/editions/${edition.editionWeek}`,
@@ -25,12 +25,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           lastModified: edition.publishedAt || undefined,
         })
       }
-    }
-    for (const post of posts) {
-      entries.push({
-        url: `${base}/archive/v1/${post.legacySlug}`,
-        lastModified: new Date(post.date),
-      })
     }
   } catch {
     // sitemap still returns the static pages if the database is down

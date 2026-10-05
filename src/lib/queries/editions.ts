@@ -1,6 +1,6 @@
 import { asc, desc, eq } from 'drizzle-orm'
 import { getDb } from '../db'
-import { citations, editionStories, editions, postsArchive } from '../db/schema'
+import { citations, editionStories, editions } from '../db/schema'
 
 export type EditionStoryView = {
   id: string
@@ -57,17 +57,6 @@ export async function getEditionByPreviewToken(token: string): Promise<EditionVi
   const rows = await db.select().from(editions).where(eq(editions.previewToken, token))
   if (!rows[0]) return null
   return hydrateEdition(rows[0].id)
-}
-
-export async function getArchivePosts() {
-  const db = await getDb()
-  return db.select().from(postsArchive).orderBy(desc(postsArchive.date))
-}
-
-export async function getArchivePost(slug: string) {
-  const db = await getDb()
-  const rows = await db.select().from(postsArchive).where(eq(postsArchive.legacySlug, slug))
-  return rows[0] || null
 }
 
 async function hydrateEdition(editionId: string): Promise<EditionView> {

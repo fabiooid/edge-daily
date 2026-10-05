@@ -39,8 +39,8 @@ export default function AboutPage() {
               is met.
             </p>
             <p>
-              The earlier Edge Daily posts live under Archive (v1). That version
-              also covered Web3, Fintech and Energy.
+              Meridian starts at Week 1. Earlier Edge Daily posts were not carried
+              over.
             </p>
           </div>
         </article>

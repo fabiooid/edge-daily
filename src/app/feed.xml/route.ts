@@ -1,5 +1,6 @@
 import { site, siteUrl } from '../../../config/site'
 import { getPublishedEditions } from '@/lib/queries/editions'
+import { formatWeekDisplay } from '@/lib/story-meta'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +14,7 @@ export async function GET() {
         const link = `${base}/editions/${edition.editionWeek}`
         const date = edition.publishedAt?.toUTCString() || new Date().toUTCString()
         return `<item>
-  <title>${site.name} ${edition.editionWeek}</title>
+  <title>${site.name} ${formatWeekDisplay(edition.editionWeek)}</title>
   <link>${link}</link>
   <guid>${link}</guid>
   <pubDate>${date}</pubDate>

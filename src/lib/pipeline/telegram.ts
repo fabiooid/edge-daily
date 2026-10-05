@@ -1,4 +1,5 @@
 import { siteUrl } from '../../../config/site'
+import { formatWeekDisplay } from '../story-meta'
 import { isAllowedTelegramChat } from '../auth'
 
 type InlineButton = {
@@ -15,7 +16,7 @@ export function buildPreviewMessage(input: {
 }): { text: string; buttons: InlineButton[][] } {
   const url = `${siteUrl()}/preview/${input.previewToken}`
   const lines = [
-    `Meridian preview: ${input.editionWeek}`,
+    `Meridian preview: ${formatWeekDisplay(input.editionWeek)}`,
     `${input.storyCount} stories ready for review.`,
     input.passed ? 'Blocking checks passed.' : 'Blocking checks failed. Do not approve until this is fixed.',
     '',

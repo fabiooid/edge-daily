@@ -15,7 +15,6 @@ async function main() {
   process.env.PGLITE_PATH = process.env.PGLITE_PATH || '.data/edge-weekly'
   await run('npx', ['tsx', 'scripts/migrate.ts'])
   await run('npx', ['tsx', 'scripts/seed-sources.ts'])
-  await run('npx', ['tsx', 'scripts/import-archive.ts'])
   await run('npx', ['tsx', 'scripts/seed-demo-edition.ts'])
   console.log('Demo data is ready. Run npm run dev to view the site.')
 }
