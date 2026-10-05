@@ -1,0 +1,12 @@
+name,category,tier,region,access,url_or_endpoint,verification_status,paywall,curated,reason
+OpenAI News,Labs,core,Global (US),rss,https://openai.com/news/rss.xml,verified 2026-10-02,no,yes,Official launches and policy from the most-covered lab.
+Google DeepMind Blog,Labs,core,Global (UK/US),rss,https://deepmind.google/blog/rss.xml,verified 2026-10-02,no,yes,Official Gemini and research announcements.
+Anthropic News,Labs,core,Global (US),rss,https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_news.xml,verified 2026-10-02; unofficial community mirror,no,yes,Anthropic has no official feed; this mirror is the stand-in.
+Mistral AI News,Labs,core,Global (EU),rss,https://mistral.ai/news/rss,verified 2026-10-02,no,yes,The main European open-model lab.
+Hugging Face lab releases,Labs,core,"CN, JP, KR, IN, SEA",api,https://huggingface.co/api/models?author={org}&sort=createdAt&direction=-1&limit=20,verified 2026-10-02,no,yes,Model drops from labs that have no public blog feed.
+Rest of World,Newsrooms,core,Global South,rss,https://restofworld.org/feed/,verified 2026-10-02,no,yes,Reporting on tech outside the usual US-Europe beat.
+SCMP Tech,Newsrooms,core,"HK, CN",rss,https://www.scmp.com/rss/36/feed,verified 2026-10-02,partial,yes,Hong Kong paper of record for China and HK tech.
+KrASIA,Newsrooms,core,"CN, SEA",rss,https://console.kr-asia.com/feed,verified 2026-10-02,no,yes,China and Southeast Asia tech business news.
+Tech in Asia,Newsrooms,core,"SEA, Asia",rss,https://www.techinasia.com/feed,verified 2026-10-02,partial,yes,Southeast Asia startups and AI.
+Recode China AI,Newsrooms,core,CN,rss,https://recodechinaai.substack.com/feed,verified 2026-10-02,freemium,yes,Chinese AI companies and strategy.
+Hacker News (Algolia search API),Signal,signal only,Global,api,"https://hn.algolia.com/api/v1/search_by_date?tags=story&query={q}&numericFilters=points%3E{n},created_at_i%3E{unix}",verified 2026-10-02,no,yes,Signal only. Never cited alone. Missing points never lower a story.

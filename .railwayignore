@@ -1,7 +1,7 @@
-# Ignore frontend files - only deploy backend
-/src
-/public
-vite.config.js
-index.html
-/package.json
-/package-lock.json
+.data
+.next
+node_modules
+server
+*.db
+.env
+.env.local

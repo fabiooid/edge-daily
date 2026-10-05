@@ -1,0 +1,182 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Notion-inspired light palette */
+:root {
+    --background: #ffffff;
+    --foreground: #37352f;
+    --card: #ffffff;
+    --card-foreground: #37352f;
+    --popover: #ffffff;
+    --popover-foreground: #37352f;
+    --primary: #37352f;
+    --primary-foreground: #ffffff;
+    --secondary: #f1f1ef;
+    --secondary-foreground: #37352f;
+    --muted: #f1f1ef;
+    --muted-foreground: rgba(55, 53, 47, 0.65);
+    --accent: #f1f1ef;
+    --accent-foreground: #37352f;
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: #e9e9e7;
+    --input: #e9e9e7;
+    --ring: rgba(55, 53, 47, 0.35);
+    --chart-1: #d3d1cb;
+    --chart-2: rgba(55, 53, 47, 0.65);
+    --chart-3: #787774;
+    --chart-4: #5f5e5b;
+    --chart-5: #37352f;
+    --radius: 0.375rem;
+    --sidebar: #f7f7f5;
+    --sidebar-foreground: #37352f;
+    --sidebar-primary: #37352f;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #f1f1ef;
+    --sidebar-accent-foreground: #37352f;
+    --sidebar-border: #e9e9e7;
+    --sidebar-ring: rgba(55, 53, 47, 0.35);
+}
+
+/* Notion-inspired dark palette */
+.dark {
+    --background: #191919;
+    --foreground: rgba(255, 255, 255, 0.9);
+    --card: #202020;
+    --card-foreground: rgba(255, 255, 255, 0.9);
+    --popover: #202020;
+    --popover-foreground: rgba(255, 255, 255, 0.9);
+    --primary: rgba(255, 255, 255, 0.9);
+    --primary-foreground: #191919;
+    --secondary: #2a2a2a;
+    --secondary-foreground: rgba(255, 255, 255, 0.9);
+    --muted: #2a2a2a;
+    --muted-foreground: rgba(255, 255, 255, 0.55);
+    --accent: #2a2a2a;
+    --accent-foreground: rgba(255, 255, 255, 0.9);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: rgba(255, 255, 255, 0.1);
+    --input: rgba(255, 255, 255, 0.12);
+    --ring: rgba(255, 255, 255, 0.3);
+    --chart-1: rgba(255, 255, 255, 0.75);
+    --chart-2: rgba(255, 255, 255, 0.55);
+    --chart-3: rgba(255, 255, 255, 0.4);
+    --chart-4: rgba(255, 255, 255, 0.28);
+    --chart-5: rgba(255, 255, 255, 0.16);
+    --sidebar: #202020;
+    --sidebar-foreground: rgba(255, 255, 255, 0.9);
+    --sidebar-primary: rgba(255, 255, 255, 0.9);
+    --sidebar-primary-foreground: #191919;
+    --sidebar-accent: #2a2a2a;
+    --sidebar-accent-foreground: rgba(255, 255, 255, 0.9);
+    --sidebar-border: rgba(255, 255, 255, 0.1);
+    --sidebar-ring: rgba(255, 255, 255, 0.3);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+.prose-article {
+  font-size: 1.125rem;
+  line-height: 1.8;
+}
+
+.prose-article a {
+  text-underline-offset: 3px;
+}
+
+.prose-article blockquote {
+  font-style: normal;
+  border-left-color: var(--foreground);
+}
+
+.prose {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-lead: var(--muted-foreground);
+  --tw-prose-links: var(--foreground);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-counters: var(--muted-foreground);
+  --tw-prose-bullets: var(--muted-foreground);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--foreground);
+  --tw-prose-quote-borders: var(--border);
+  --tw-prose-captions: var(--muted-foreground);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-pre-code: var(--foreground);
+  --tw-prose-pre-bg: var(--muted);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
+  --tw-prose-invert-body: var(--foreground);
+  --tw-prose-invert-headings: var(--foreground);
+  --tw-prose-invert-lead: var(--muted-foreground);
+  --tw-prose-invert-links: var(--foreground);
+  --tw-prose-invert-bold: var(--foreground);
+  --tw-prose-invert-counters: var(--muted-foreground);
+  --tw-prose-invert-bullets: var(--muted-foreground);
+  --tw-prose-invert-hr: var(--border);
+  --tw-prose-invert-quotes: var(--foreground);
+  --tw-prose-invert-quote-borders: var(--border);
+  --tw-prose-invert-captions: var(--muted-foreground);
+  --tw-prose-invert-code: var(--foreground);
+  --tw-prose-invert-pre-code: var(--foreground);
+  --tw-prose-invert-pre-bg: var(--muted);
+  --tw-prose-invert-th-borders: var(--border);
+  --tw-prose-invert-td-borders: var(--border);
+}

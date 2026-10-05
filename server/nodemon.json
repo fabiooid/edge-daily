@@ -1,5 +1,0 @@
-{
-  "watch": ["server.ts", "scheduler.ts", "database.ts", "eval.ts", "theme-scheduler.ts", "src"],
-  "ext": "ts,json",
-  "ignore": ["*.db", "node_modules", "mastra.db"]
-}
