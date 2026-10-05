@@ -66,7 +66,7 @@ Latent Space / AINews,Global,secondary,Global (US),rss,https://www.latent.space/
 Simon Willison,Global,secondary,Global,rss,https://simonwillison.net/atom/everything/,verified 2026-10-02; latest 2026-10-01,no,,Hands-on testing of new models and tools; reliable.
 Ben's Bites,Global,signal only,Global,rss,https://www.bensbites.com/feed,verified 2026-10-02; latest 2026-10-01,no,,Popular product-focused AI newsletter.
 TLDR AI,Global,signal only,Global,rss,https://tldr.tech/api/rss/ai,verified 2026-10-02; latest 2026-10-01,no,,Daily link roundup; useful to check nothing big was missed.
-Last Week in AI,Global,signal only,Global,rss,https://lastweekin.ai/feed,verified 2026-10-02; latest 2026-09-30,no,,"Weekly roundup; same cadence as Edge Weekly, good cross-check."
+Last Week in AI,Global,signal only,Global,rss,https://lastweekin.ai/feed,verified 2026-10-02; latest 2026-09-30,no,,"Weekly roundup; same cadence as Meridian, good cross-check."
 One Useful Thing (Ethan Mollick),Global,signal only,Global,rss,https://www.oneusefulthing.org/feed,verified 2026-10-02; latest 2026-10-01,no,,AI at work for general professionals; matches the wider audience.
 Epoch AI,Global,signal only,Global,rss,https://epochai.substack.com/feed,verified 2026-10-02; latest 2026-09-28,no,,"Data on compute, costs and trends; good for 'why it matters' context."
 The Batch (DeepLearning.AI),Global,signal only,Global,email,https://www.deeplearning.ai/the-batch/,no feed found (/the-batch/feed/ 404): subscribe by email,no,,Andrew Ng's weekly; email only.

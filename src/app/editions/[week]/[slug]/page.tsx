@@ -90,7 +90,7 @@ export default async function StoryPage({
               className="mt-10 max-w-[68ch] scroll-mt-24 rounded-2xl border border-foreground/10 bg-muted px-6 py-6"
             >
               <p className="text-xs font-medium tracking-[0.16em] text-muted-foreground uppercase">
-                Why it matters for Asia
+                Why it matters here
               </p>
               <p className="mt-3 text-base leading-7">{story.whyItMatters}</p>
               {story.asiaAngle && <p className="mt-3 text-base leading-7">{story.asiaAngle}</p>}

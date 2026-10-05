@@ -14,6 +14,7 @@ export type RankableItem = {
 export type RankedCluster = RankableItem & {
   score: number
   isAsia: boolean
+  hasGeographicStakes: boolean
 }
 
 const ASIA_HINTS = [
@@ -37,21 +38,54 @@ const ASIA_HINTS = [
   'asia',
 ]
 
+const GEO_HINTS = [
+  ...ASIA_HINTS,
+  'europe',
+  'european',
+  'brussels',
+  'united states',
+  'u.s.',
+  'washington',
+  'white house',
+  'britain',
+  'united kingdom',
+  'london',
+  'africa',
+  'nigeria',
+  'kenya',
+  'brazil',
+  'mexico',
+  'latin america',
+  'middle east',
+  'uae',
+  'israel',
+  'canada',
+  'australia',
+]
+
 export function storyLooksAsian(title: string, region: string): boolean {
   if (isAsiaRegion(region)) return true
   const haystack = title.toLowerCase()
   return ASIA_HINTS.some((hint) => haystack.includes(hint))
 }
 
+export function hasGeographicStakes(title: string, region: string): boolean {
+  if (storyLooksAsian(title, region)) return true
+  const haystack = `${title} ${region}`.toLowerCase().trim()
+  if (GEO_HINTS.some((hint) => haystack.includes(hint))) return true
+  const value = region.toLowerCase().trim()
+  if (!value || value === 'global') return false
+  return true
+}
+
 /**
- * HN points can raise a score. Missing HN attention never lowers it,
- * especially not for Asia stories.
+ * HN points can raise a score. Missing HN attention never lowers it.
+ * Place tags do not add score; they only break ties.
  */
 export function rankScore(item: RankableItem, compileAt: Date): number {
   let score = item.weight
   if (item.tier === 'core') score += 20
   if (item.tier === 'secondary') score += 8
-  if (storyLooksAsian(item.title, item.region)) score += 25
   if (item.publishedAt) {
     const ageHours = (compileAt.getTime() - item.publishedAt.getTime()) / 36e5
     score += Math.max(0, 14 - ageHours / 12)
@@ -68,31 +102,27 @@ export function rankItems(items: RankableItem[], compileAt: Date): RankedCluster
     .map((item) => ({
       ...item,
       isAsia: storyLooksAsian(item.title, item.region),
+      hasGeographicStakes: hasGeographicStakes(item.title, item.region),
       score: rankScore(item, compileAt),
     }))
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      if (a.hasGeographicStakes !== b.hasGeographicStakes) {
+        return Number(b.hasGeographicStakes) - Number(a.hasGeographicStakes)
+      }
+      return 0
+    })
 }
 
 export function pickTopStories(items: RankedCluster[], count = 6): RankedCluster[] {
   const picked: RankedCluster[] = []
   const used = new Set<string>()
 
-  const take = (candidate: RankedCluster) => {
-    if (used.has(candidate.id)) return
-    picked.push(candidate)
-    used.add(candidate.id)
-  }
-
-  const asia = items.filter((item) => item.isAsia && !item.isSignal)
-  const rest = items.filter((item) => !item.isSignal)
-
-  for (const item of asia) {
-    if (picked.filter((row) => row.isAsia).length >= 2) break
-    take(item)
-  }
-  for (const item of rest) {
+  for (const item of items) {
+    if (item.isSignal || used.has(item.id)) continue
+    picked.push(item)
+    used.add(item.id)
     if (picked.length >= count) break
-    take(item)
   }
-  return picked.slice(0, count)
+  return picked
 }

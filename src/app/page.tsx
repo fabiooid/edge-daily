@@ -31,7 +31,7 @@ export default async function HomePage() {
       <PageShell>
         <StatusAlert
           title="No weekly edition is live yet."
-          description="The first Edge Weekly issue publishes after it is approved. Check back on a Tuesday morning Hong Kong time."
+          description="The first Meridian issue publishes after it is approved. Check back on a Tuesday morning Hong Kong time."
         />
       </PageShell>
     )

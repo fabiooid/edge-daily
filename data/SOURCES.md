@@ -1,8 +1,8 @@
-# Edge Weekly source list
+# Meridian source list
 
-*Edge Weekly: the AI week in Asia.* Vetted 2 October 2026 (HKT). Every feed URL marked "verified" was fetched from the box on that date and parsed as RSS or Atom (item count and latest item date recorded). Anything else is marked as no feed, blocked, stale, or unverified. No feed URL here is guessed. Machine-readable copy: `sources.csv`.
+*Meridian: the AI week, wherever it lands.* Vetted 2 October 2026 (HKT). Every feed URL marked "verified" was fetched from the box on that date and parsed as RSS or Atom (item count and latest item date recorded). Anything else is marked as no feed, blocked, stale, or unverified. No feed URL here is guessed. Machine-readable copy: `sources.csv`.
 
-**Tiers.** core: read every week, high trust. secondary: read every week, filter for AI and Asia. signal only: used to spot or confirm stories, never cited alone.
+**Tiers.** core: read every week, high trust. secondary: read every week, filter for AI. signal only: used to spot or confirm stories, never cited alone.
 
 ## Top 10 to start milestone 1
 
@@ -17,7 +17,7 @@
 9. **Recode China AI** (CN): Weekly analysis of Chinese AI companies, models and strategy. Feed: `https://recodechinaai.substack.com/feed`
 10. **HK Digital Policy Office news** (HK): Official HK government AI and digital policy announcements. Feed: `https://www.digitalpolicy.gov.hk/en/news/latest/rss.data.xml`
 
-Why this mix: 5 Asia news sources (SCMP, KrASIA, Rest of World, Tech in Asia, Recode China AI), one API that tracks model releases from Asian labs that have no blog feed (Hugging Face), the three most-covered global labs, and Hong Kong's digital policy office for the local angle. All ten feeds parsed cleanly on 2 October 2026. Anthropic's is a community mirror, so it's flagged as unofficial.
+Why this mix: three global labs, one API for labs without a blog feed, plus regional newsrooms so each picked story can still be tagged by place. The newsletter itself is worldwide; Asia sources stay because they localise stories, not because the product is Asia-only. All ten feeds parsed cleanly on 2 October 2026. Anthropic's is a community mirror, so it's flagged as unofficial.
 
 ## 1. Primary sources: labs and companies (27)
 
@@ -100,7 +100,7 @@ Why this mix: 5 Asia news sources (SCMP, KrASIA, Rest of World, Tech in Asia, Re
 | Simon Willison | secondary | Global | rss | `https://simonwillison.net/atom/everything/` | verified 2026-10-02; latest 2026-10-01 | no | Hands-on testing of new models and tools; reliable. |
 | Ben's Bites | signal only | Global | rss | `https://www.bensbites.com/feed` | verified 2026-10-02; latest 2026-10-01 | no | Popular product-focused AI newsletter. |
 | TLDR AI | signal only | Global | rss | `https://tldr.tech/api/rss/ai` | verified 2026-10-02; latest 2026-10-01 | no | Daily link roundup; useful to check nothing big was missed. |
-| Last Week in AI | signal only | Global | rss | `https://lastweekin.ai/feed` | verified 2026-10-02; latest 2026-09-30 | no | Weekly roundup; same cadence as Edge Weekly, good cross-check. |
+| Last Week in AI | signal only | Global | rss | `https://lastweekin.ai/feed` | verified 2026-10-02; latest 2026-09-30 | no | Weekly roundup; same cadence as Meridian, good cross-check. |
 | One Useful Thing (Ethan Mollick) | signal only | Global | rss | `https://www.oneusefulthing.org/feed` | verified 2026-10-02; latest 2026-10-01 | no | AI at work for general professionals; matches the wider audience. |
 | Epoch AI | signal only | Global | rss | `https://epochai.substack.com/feed` | verified 2026-10-02; latest 2026-09-28 | no | Data on compute, costs and trends; good for 'why it matters' context. |
 | The Batch (DeepLearning.AI) | signal only | Global | email | `https://www.deeplearning.ai/the-batch/` | no feed found (/the-batch/feed/ 404): subscribe by email | no | Andrew Ng's weekly; email only. |
@@ -192,13 +192,13 @@ Optional, use with care: [@teortaxesTex](https://x.com/teortaxesTex) (77K, a ver
 - Creating a list costs $0.010 and each list change $0.005, so setting up a 25-member list is roughly $0.14 one-off.
 - The same post returned more than once in a UTC day is billed once.
 - Monthly cap of 3 million post reads (not a constraint here).
-- Posting to X costs $0.015, or **$0.200 if the post contains a URL**. That matters if Edge Weekly auto-posts links.
+- Posting to X costs $0.015, or **$0.200 if the post contains a URL**. That matters if Meridian auto-posts links.
 - Estimate (my assumption, not a quote): capping the weekly list read at about 500 posts and the 5 searches at about 50 posts each comes to about 750 reads a week, or roughly $3.75 a week and $15 to $16 a month. Tighter caps (300 list posts, 20 per search) bring it to about $8 a month. This was not in the earlier rebuild plan's cost estimate, so add it.
 - Fabio's connected X account currently shows $26.70 in free credit, valid until 6 September 2027. At the tighter caps that covers about 3 months.
 
 ## Notable gaps
 - **No feeds from most Chinese labs:** DeepSeek, Moonshot, Zhipu, MiniMax, ByteDance Seed, Baidu and Tencent have no working feeds. Qwen's new blog has none either, and its old feed has been stale since September 2025. Covered by the Hugging Face org API and X, which catch model releases but not business news.
-- **Mainland Chinese-language media:** not included (for example 36Kr, Jiqizhixin, QbitAI). The English intermediaries above (KrASIA, Pandaily, ChinAI, Recode China AI) partly fill this. Adding one or two Chinese-language sources with translation would make Edge Weekly much stronger.
+- **Mainland Chinese-language media:** not included (for example 36Kr, Jiqizhixin, QbitAI). The English intermediaries above (KrASIA, Pandaily, ChinAI, Recode China AI) partly fill this. Adding one or two Chinese-language sources with translation would make Meridian much stronger.
 - **Japan and Korea are thin:** there's no Nikkei tech-only feed (only the all-sections feed, with no dates), Korea JoongAng Daily blocks bots (403), and Samsung's newsroom blocks bots. Japanese-language tech media is missing.
 - **Regulators rarely publish feeds:** PCPD, IMDA, PDPC, CAC, Japan's AISI, Korea's MSIT and MeitY have none that I could verify. Plan a small page scraper or a monthly manual check. Hong Kong is well covered (Digital Policy Office, HKMA and government press release feeds all verified).
 - **Paywalled:** Nikkei Asia, The Information, FT, Bloomberg, The Ken, Caixin, DealStreetAsia. Use their headlines as leads and confirm the story elsewhere before citing.

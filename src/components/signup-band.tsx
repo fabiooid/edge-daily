@@ -9,11 +9,11 @@ export default function SignupBand() {
             Tuesday morning · Hong Kong
           </p>
           <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight md:text-4xl">
-            Get the AI week in Asia
+            Get the AI week, wherever it lands
           </h2>
           <p className="mt-3 max-w-xl text-base leading-7 text-muted-foreground">
-            One short briefing a week. The stories that matter if you live or work in Asia,
-            written in plain language.
+            One short briefing a week. The stories that matter, written in plain language,
+            with a local read on the place each one lands.
           </p>
         </div>
         <NewsletterSignup idPrefix="band" />

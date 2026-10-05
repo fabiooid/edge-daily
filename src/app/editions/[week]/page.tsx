@@ -19,7 +19,7 @@ export async function generateMetadata({
     title: `${site.subtitle}, ${edition.editionWeek}`,
     description: edition.lede.join(' '),
     openGraph: {
-      title: `Edge Weekly ${edition.editionWeek}`,
+      title: `${site.name} ${edition.editionWeek}`,
       description: edition.lede[0] || site.description,
     },
   }

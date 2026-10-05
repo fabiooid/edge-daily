@@ -5,7 +5,7 @@ import type { IngestedItem, SourceAdapter } from './types'
 const parser = new Parser({
   timeout: 15000,
   headers: {
-    'User-Agent': 'EdgeWeekly/1.0 (+https://edgeweekly.example)',
+    'User-Agent': 'Meridian/1.0 (+https://meridian.example)',
     Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml',
   },
 })

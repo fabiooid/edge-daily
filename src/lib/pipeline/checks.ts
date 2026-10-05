@@ -100,10 +100,6 @@ export function checkEditionShape(
   const problems: string[] = []
   if (stories.length < min) problems.push(`only ${stories.length} stories`)
   if (stories.length > pipelineConfig.maxStories) problems.push(`too many stories: ${stories.length}`)
-  const asiaCount = stories.filter((story) => story.isAsia).length
-  if (asiaCount < pipelineConfig.minAsiaStories) {
-    problems.push(`only ${asiaCount} Asia stories`)
-  }
   return {
     name: 'edition_shape',
     blocking: true,
@@ -138,7 +134,7 @@ export async function checkLinksResolve(
       const response = await fetch(citation.url, {
         method: 'GET',
         redirect: 'follow',
-        headers: { 'User-Agent': 'EdgeWeekly/1.0' },
+        headers: { 'User-Agent': 'Meridian/1.0' },
         signal: AbortSignal.timeout(8000),
       })
       if (response.status < 200 || response.status >= 400) {

@@ -13,7 +13,7 @@ export async function GET() {
         const link = `${base}/editions/${edition.editionWeek}`
         const date = edition.publishedAt?.toUTCString() || new Date().toUTCString()
         return `<item>
-  <title>Edge Weekly ${edition.editionWeek}</title>
+  <title>${site.name} ${edition.editionWeek}</title>
   <link>${link}</link>
   <guid>${link}</guid>
   <pubDate>${date}</pubDate>

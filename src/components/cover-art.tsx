@@ -19,6 +19,12 @@ const PALETTES: Record<StoryRegion, [string, string, string]> = {
   Taiwan: ['#13324d', '#6eb8ee', '#2b6288'],
   'Southeast Asia': ['#2a4412', '#d7e45c', '#6f9224'],
   Asia: ['#123c38', '#ebc06a', '#2f7a68'],
+  'United States': ['#1a2a4a', '#7ea4e8', '#3d5f9a'],
+  'United Kingdom': ['#1e2c4a', '#c96b6b', '#4a628c'],
+  Europe: ['#1a2744', '#d4b06a', '#4a6aa0'],
+  Africa: ['#3a2410', '#e0a04a', '#7a4a1c'],
+  'Latin America': ['#1c3a28', '#6fd4a0', '#3a7a54'],
+  'Middle East': ['#3a2814', '#e8c878', '#8a5a28'],
   Global: ['#172038', '#9cb6dc', '#3a4f78'],
 }
 

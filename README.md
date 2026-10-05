@@ -1,8 +1,8 @@
-# Edge Weekly
+# Meridian
 
-**Edge Weekly: the AI week in Asia.**
+**Meridian: the AI week, wherever it lands.**
 
-A weekly briefing of the AI news that matters if you live or work in Asia. Ten minutes, once a week, published on Tuesday morning Hong Kong time.
+A weekly briefing of the week's biggest AI stories, explained plainly, with a local read for the place each story lands. Ten minutes, once a week, published on Tuesday morning Hong Kong time.
 
 This repo is a rebuild of the old Edge Daily site. Milestone 1 is a working end-to-end weekly edition: a Next.js site, Postgres, a Node pipeline you run as a CLI, blocking checks before approval, and a Telegram approve / reject / request-changes flow.
 
@@ -138,7 +138,7 @@ Supported source types:
 
 - RSS / Atom
 - Hugging Face models API, filtered by author org
-- Hacker News via Algolia (signal only: never cited; missing HN attention does not lower an Asia story)
+- Hacker News via Algolia (signal only: never cited; missing HN attention does not lower a story)
 - X, behind `FEATURE_X_SOURCES`, seeded with 25 accounts and search queries, all paused
 - Scrape / email placeholders so a later adapter can plug in
 
@@ -161,7 +161,7 @@ Before an edition can be approved, these blocking checks must pass:
 - Source floor (two sources, or one primary)
 - Style (no em dashes, no hype words, required sections)
 - Links resolve (skipped only in mock mode)
-- Edition shape (5 to 7 stories, at least two from Asia)
+- Edition shape (5 to 7 stories; each story is tagged by place, with no Asia quota)
 
 Telegram buttons: Approve, Reject, Request changes. Approve publishes the edition page. `PUBLISH_MODE=manual` is the default. `PUBLISH_MODE=auto` publishes only when the configured eval thresholds are met. Otherwise it falls back to Telegram approval.
 

@@ -15,7 +15,7 @@ export function buildPreviewMessage(input: {
 }): { text: string; buttons: InlineButton[][] } {
   const url = `${siteUrl()}/preview/${input.previewToken}`
   const lines = [
-    `Edge Weekly preview: ${input.editionWeek}`,
+    `Meridian preview: ${input.editionWeek}`,
     `${input.storyCount} stories ready for review.`,
     input.passed ? 'Blocking checks passed.' : 'Blocking checks failed. Do not approve until this is fixed.',
     '',

@@ -5,6 +5,7 @@ import StoryCard from '@/components/story-card'
 import { formatLongDate, formatWeekDisplay } from '@/lib/story-meta'
 import { toStoryCard } from '@/lib/story-view'
 import type { EditionView } from '@/lib/queries/editions'
+import { site } from '../../config/site'
 
 export default function HomeMagazine({ edition }: { edition: EditionView }) {
   const [lead, ...rest] = edition.stories
@@ -14,10 +15,10 @@ export default function HomeMagazine({ edition }: { edition: EditionView }) {
     <>
       <PageShell>
         <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-          Edge Weekly · {formatWeekDisplay(edition.editionWeek)}
+          {site.name} · {formatWeekDisplay(edition.editionWeek)}
           {edition.publishedAt ? ` · ${formatLongDate(edition.publishedAt)}` : ''}
         </p>
-        <h1 className="sr-only">The AI week in Asia</h1>
+        <h1 className="sr-only">The AI week, wherever it lands</h1>
         <div className="mt-6">
           <StoryCard story={toStoryCard(edition, lead)} featured />
         </div>

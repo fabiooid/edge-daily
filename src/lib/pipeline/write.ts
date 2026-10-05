@@ -30,15 +30,15 @@ function mockStory(item: RankedCluster, extras: RankedCluster[]): StoryInput {
     })
   }
 
+  const place = item.hasGeographicStakes ? item.region || 'this place' : 'wherever you work'
   const asiaAngle = item.isAsia
-    ? 'This is a regional story, so teams in Asia can treat it as a local product, policy or model move rather than distant US news.'
+    ? 'This is a regional story, so teams on the ground can treat it as a local product, policy or model move rather than distant news.'
     : null
 
   return {
     headline: item.title.replace(/—|–/g, '-'),
     body: `${item.title} landed inside this week's window. The official account or publisher described a concrete change, not a rumour. We are using the primary link plus a second briefing so the facts can be checked.\n\nWhat is new is limited to what those sources state. Anything they do not say is left out.`,
-    whyItMatters:
-      'If you work with AI in Asia, this changes what you can use, buy or plan for this week. Read the sources before you brief anyone.',
+    whyItMatters: `If you work with AI in ${place}, this changes what you can use, buy or plan for this week. Read the sources before you brief anyone.`,
     asiaAngle,
     isAsia: item.isAsia,
     citations,
@@ -63,7 +63,7 @@ export async function writeStories(
 
   for (const item of picked) {
     const supports = all.filter((row) => row.id !== item.id).slice(0, 3)
-    const prompt = `Write one Edge Weekly story for a smart non-specialist in Asia.
+    const prompt = `Write one Meridian story for a smart non-specialist, anywhere in the world.
 Compile time: ${context.compileAt.toISOString()}
 Primary item: ${item.title} (${item.region}, ${item.tier})
 Supporting items: ${supports.map((row) => row.title).join('; ') || 'none'}
@@ -73,9 +73,9 @@ Rules:
 - No em dashes
 - No hype words such as revolutionary or game-changing
 - 2 or 3 short sentences for what happened
-- A why it matters line of 1 or 2 sentences about people and organisations in Asia
-- Asia angle only if the sources support it
-- Return JSON with headline, body, whyItMatters, asiaAngle (string or null), isAsia (boolean)`
+- A why it matters line of 1 or 2 sentences for the reader where this story lands (country or region if the sources name one; otherwise a global reader)
+- Local angle (asiaAngle) only if the sources support a place-specific read
+- Return JSON with headline, body, whyItMatters, asiaAngle (string or null), isAsia (boolean; true when the story has a clear Asia stake)`
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/sheet'
 import Logo from '@/components/logo'
 import ThemeToggle from '@/components/theme-toggle'
+import { site } from '../../config/site'
 
 const links = [
   { href: '/archive', label: 'Archive' },
@@ -25,7 +26,7 @@ export default function SiteHeader() {
       <nav className="mx-auto flex h-16 w-full max-w-[1180px] items-center justify-between px-5 md:px-8">
         <Link href="/" className="flex items-center gap-3 text-foreground no-underline">
           <Logo size={22} />
-          <span className="text-[15px] font-semibold tracking-tight">Edge Weekly</span>
+          <span className="text-[15px] font-semibold tracking-tight">{site.name}</span>
         </Link>
         <div className="hidden items-center gap-1 md:flex">
           {links.map((link) => (
@@ -47,7 +48,7 @@ export default function SiteHeader() {
             <SheetContent side="right" className="w-72">
               <SheetHeader>
                 <SheetTitle>Menu</SheetTitle>
-                <SheetDescription>Edge Weekly pages</SheetDescription>
+                <SheetDescription>{site.name} pages</SheetDescription>
               </SheetHeader>
               <div className="flex flex-col gap-2 px-4">
                 {links.map((link) => (

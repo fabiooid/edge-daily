@@ -27,7 +27,7 @@ export const hackernewsAdapter: SourceAdapter = {
       url.searchParams.set('numericFilters', `points>${query.minPoints},created_at_i>${since}`)
       url.searchParams.set('hitsPerPage', '30')
       const response = await fetch(url, {
-        headers: { Accept: 'application/json', 'User-Agent': 'EdgeWeekly/1.0' },
+        headers: { Accept: 'application/json', 'User-Agent': 'Meridian/1.0' },
       })
       if (!response.ok) continue
       const payload = (await response.json()) as { hits?: AlgoliaHit[] }

@@ -23,7 +23,7 @@ export function toStoryCard(
 export function storySections(story: EditionStoryView) {
   return [
     { id: 'story', label: 'The story' },
-    { id: 'why-it-matters', label: 'Why it matters for Asia' },
+    { id: 'why-it-matters', label: 'Why it matters here' },
     ...(story.citations.length > 0 ? [{ id: 'sources', label: 'Sources' }] : []),
   ]
 }

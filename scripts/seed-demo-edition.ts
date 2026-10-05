@@ -7,13 +7,13 @@ import { eq } from 'drizzle-orm'
 const DEMO_STORIES = [
   {
     sourceName: 'OpenAI News',
-    title: 'OpenAI ships a smaller Asia-region API endpoint for lower latency',
+    title: 'OpenAI ships a smaller API endpoint for lower latency worldwide',
     url: 'https://openai.com/index/asia-endpoint-demo',
     isAsia: false,
   },
   {
     sourceName: 'Google DeepMind Blog',
-    title: 'DeepMind publishes a Gemini eval that includes Chinese and Japanese prompts',
+    title: 'DeepMind publishes a Gemini eval with multilingual prompts',
     url: 'https://deepmind.google/blog/gemini-eval-asia-demo',
     isAsia: true,
   },

@@ -123,13 +123,13 @@ export default function ArchiveBrowser({
                   <CoverArt
                     seed={edition.seed}
                     theme="AI"
-                    region="Asia"
+                    region="Global"
                     className="aspect-[16/8]"
                   />
                   <div className="p-5">
                     <Badge variant="secondary">{formatWeekDisplay(edition.week)}</Badge>
                     <h3 className="mt-3 font-heading text-2xl font-bold tracking-tight group-hover:underline">
-                      The AI week in Asia
+                      The AI week, wherever it lands
                     </h3>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">{edition.excerpt}</p>
                     <p className="mt-3 text-xs tracking-wide text-muted-foreground uppercase">

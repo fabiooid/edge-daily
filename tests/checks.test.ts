@@ -75,9 +75,14 @@ describe('blocking checks', () => {
     expect(result.passed).toBe(false)
   })
 
-  it('requires at least two Asia stories', () => {
-    const result = checkEditionShape([goodStory, { ...goodStory, isAsia: false }])
-    expect(result.passed).toBe(false)
-    expect(result.detail).toMatch(/Asia/)
+  it('requires 5 to 7 stories, with no Asia quota', () => {
+    const fiveGlobal = Array.from({ length: 5 }, () => ({ ...goodStory, isAsia: false }))
+    expect(checkEditionShape(fiveGlobal).passed).toBe(true)
+
+    const twoStories = [goodStory, { ...goodStory, isAsia: false }]
+    const short = checkEditionShape(twoStories)
+    expect(short.passed).toBe(false)
+    expect(short.detail).toMatch(/only 2 stories/)
+    expect(short.detail).not.toMatch(/Asia/)
   })
 })

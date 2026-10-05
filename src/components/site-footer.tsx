@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import NewsletterSignup from '@/components/newsletter-signup'
 import Logo from '@/components/logo'
+import { site } from '../../config/site'
 
 export default function SiteFooter() {
   return (
@@ -10,11 +11,11 @@ export default function SiteFooter() {
         <div className="md:col-span-1">
           <div className="flex items-center gap-2">
             <Logo size={20} />
-            <p className="font-semibold">Edge Weekly</p>
+            <p className="font-semibold">{site.name}</p>
           </div>
           <p className="mt-4 text-sm leading-6 text-muted-foreground">
-            The AI week in Asia. A short Tuesday briefing for anyone who follows
-            AI from Hong Kong, Singapore, Seoul, Tokyo, or the rest of the region.
+            The AI week, wherever it lands. A short Tuesday briefing of global AI
+            news, with each story tagged by place.
           </p>
         </div>
         <div>

@@ -4,7 +4,6 @@ export const pipelineConfig = {
   minStories: 5,
   maxStories: 7,
   shortEditionMin: 4,
-  minAsiaStories: 2,
   minSourcesPerStory: 2,
   bannedHypeWords: [
     'revolutionary',

@@ -4,7 +4,7 @@ import type { IngestedItem, SourceAdapter, SourceRecord } from './types'
 
 async function fetchJson(url: string): Promise<unknown> {
   const response = await fetch(url, {
-    headers: { Accept: 'application/json', 'User-Agent': 'EdgeWeekly/1.0' },
+    headers: { Accept: 'application/json', 'User-Agent': 'Meridian/1.0' },
   })
   if (!response.ok) {
     throw new Error(`Hugging Face request failed: ${response.status}`)

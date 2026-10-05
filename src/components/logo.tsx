@@ -14,14 +14,9 @@ export default function Logo({ size = 32, className }: LogoProps) {
       className={className}
       aria-hidden="true"
     >
-      <path
-        d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"
-        fill="currentColor"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
+      <ellipse cx="12" cy="12" rx="4" ry="9" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M3 12h18" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
   )
 }

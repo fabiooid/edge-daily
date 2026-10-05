@@ -10,6 +10,12 @@ export type StoryRegion =
   | 'Taiwan'
   | 'Southeast Asia'
   | 'Asia'
+  | 'United States'
+  | 'United Kingdom'
+  | 'Europe'
+  | 'Africa'
+  | 'Latin America'
+  | 'Middle East'
   | 'Global'
 
 const REGION_MATCHERS: { region: StoryRegion; needles: string[] }[] = [
@@ -24,6 +30,12 @@ const REGION_MATCHERS: { region: StoryRegion; needles: string[] }[] = [
     needles: ['southeast asia', 'south-east asia', 'asean', 'indonesia', 'vietnam', 'thailand', 'malaysia', 'philippines', 'jakarta'],
   },
   { region: 'China', needles: ['china', 'chinese', 'beijing', 'shanghai', 'shenzhen', 'deepseek', 'alibaba', 'tencent', 'bytedance'] },
+  { region: 'United Kingdom', needles: ['united kingdom', 'britain', 'london', 'uk government', 'uk regulator'] },
+  { region: 'Europe', needles: ['european union', 'eu ai act', 'brussels', 'europe', 'european'] },
+  { region: 'United States', needles: ['united states', 'u.s.', 'usa', 'washington', 'white house', 'silicon valley'] },
+  { region: 'Africa', needles: ['africa', 'african', 'nigeria', 'kenya', 'south africa'] },
+  { region: 'Latin America', needles: ['latin america', 'brazil', 'mexico', 'argentina'] },
+  { region: 'Middle East', needles: ['middle east', 'uae', 'saudi', 'israel', 'dubai'] },
   { region: 'Asia', needles: ['asia', 'asian'] },
 ]
 
