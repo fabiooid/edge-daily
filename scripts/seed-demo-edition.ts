@@ -70,7 +70,10 @@ async function main() {
         excerpt: story.title,
         isSignal: false,
       })
-      .onConflictDoNothing()
+      .onConflictDoUpdate({
+        target: items.id,
+        set: { title: story.title, excerpt: story.title, publishedAt },
+      })
   }
 
   const result = await compileEdition({

@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNotNull, lte, ne } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, isNotNull, lte, ne } from 'drizzle-orm'
 import { models } from '../../../config/models'
 import { pipelineConfig } from '../../../config/pipeline'
 import { getDb } from '../db'
@@ -169,8 +169,32 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
       })
 
   if (existing[0]) {
-    await db.delete(editionStories).where(eq(editionStories.editionId, existing[0].id))
+    const oldStories = await db
+      .select({ id: editionStories.id })
+      .from(editionStories)
+      .where(eq(editionStories.editionId, existing[0].id))
+    if (oldStories.length > 0) {
+      await db.delete(citations).where(
+        inArray(
+          citations.editionStoryId,
+          oldStories.map((row) => row.id),
+        ),
+      )
+    }
+    const oldRuns = await db
+      .select({ id: evalRuns.id })
+      .from(evalRuns)
+      .where(eq(evalRuns.editionId, existing[0].id))
+    if (oldRuns.length > 0) {
+      await db.delete(evalResults).where(
+        inArray(
+          evalResults.evalRunId,
+          oldRuns.map((row) => row.id),
+        ),
+      )
+    }
     await db.delete(evalRuns).where(eq(evalRuns.editionId, existing[0].id))
+    await db.delete(editionStories).where(eq(editionStories.editionId, existing[0].id))
   }
 
   const status = decision.status
