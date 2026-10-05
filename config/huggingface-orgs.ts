@@ -1,4 +1,4 @@
-/** Asian lab orgs used by the Hugging Face models API adapter. */
+/** Lab orgs without a public blog, used by the Hugging Face models API adapter. */
 export const huggingfaceOrgs = [
   'deepseek-ai',
   'Qwen',

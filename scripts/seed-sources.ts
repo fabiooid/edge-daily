@@ -1,29 +1,23 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { huggingfaceOrgs } from '../config/huggingface-orgs'
-import { xAccounts, xSearchQueries } from '../config/x'
 import { parseCsv, slugId } from '../src/lib/csv'
 import { closeDb, execSql } from '../src/lib/db'
 import { mapSourceType, tierWeight } from '../src/lib/pipeline/sources/map-type'
 
-function shouldActivate(row: Record<string, string>): boolean {
-  if (row.top10_start === 'yes') return true
-  if (row.name.includes('Hacker News (Algolia')) return true
-  return false
-}
-
 async function main() {
   const csv = await readFile(path.join(process.cwd(), 'data/sources.csv'), 'utf8')
   const rows = parseCsv(csv)
+  const curatedIds: string[] = []
 
   for (const row of rows) {
-    if (row.category === 'Signal: X account') continue
     const type = mapSourceType(row.access, row.name)
+    if (type === 'x' || type === 'scrape' || type === 'email') continue
     const id = slugId(row.name)
-    const active = shouldActivate(row) && type !== 'x' && type !== 'scrape' && type !== 'email'
+    curatedIds.push(id)
     const feedUrl = type === 'rss' || type === 'atom' ? row.url_or_endpoint : null
     const config =
-      type === 'huggingface' && row.name.includes('org release')
+      type === 'huggingface' && /hugging face/i.test(row.name)
         ? JSON.stringify({ orgs: [...huggingfaceOrgs] })
         : '{}'
     await execSql(
@@ -52,7 +46,7 @@ async function main() {
         row.region,
         row.tier,
         tierWeight(row.tier),
-        active ? 'active' : 'paused',
+        'active',
         row.paywall,
         row.reason,
         config,
@@ -60,32 +54,11 @@ async function main() {
     )
   }
 
-  for (const account of xAccounts) {
+  if (curatedIds.length > 0) {
+    const placeholders = curatedIds.map((_, index) => `$${index + 1}`).join(',')
     await execSql(
-      `INSERT INTO x_accounts (handle, display_name, account_type, region, tier, status, notes)
-       VALUES ($1,$2,$3,$4,$5,'paused',$6)
-       ON CONFLICT (handle) DO UPDATE SET
-         display_name = EXCLUDED.display_name,
-         account_type = EXCLUDED.account_type,
-         region = EXCLUDED.region,
-         tier = EXCLUDED.tier,
-         status = 'paused'`,
-      [
-        account.handle,
-        account.name,
-        account.type,
-        account.region,
-        account.tier,
-        'Seeded and disabled. Turn on FEATURE_X_SOURCES to use.',
-      ],
-    )
-  }
-
-  for (const [index, query] of xSearchQueries.entries()) {
-    await execSql(
-      `INSERT INTO x_queries (id, query, status) VALUES ($1,$2,'paused')
-       ON CONFLICT (id) DO UPDATE SET query = EXCLUDED.query, status = 'paused'`,
-      [`xq-${index + 1}`, query],
+      `UPDATE sources SET status = 'paused' WHERE id NOT IN (${placeholders})`,
+      curatedIds,
     )
   }
 
@@ -109,7 +82,7 @@ async function main() {
     ],
   )
 
-  console.log(`Seeded ${rows.length} source rows, ${xAccounts.length} X accounts, ${xSearchQueries.length} X queries`)
+  console.log(`Seeded ${curatedIds.length} hand-picked sources. Anything else in the table is paused.`)
   await closeDb()
 }
 

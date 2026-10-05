@@ -2,7 +2,7 @@ export const site = {
   name: 'Meridian',
   subtitle: 'the AI week, wherever it lands',
   description:
-    'The week of AI news, wherever it lands, explained plainly. Each story is tagged by place. Ten minutes, once a week.',
+    'The week of AI news, wherever it lands, with a clear take on why it matters. Each story is tagged by place. Ten minutes, once a week.',
   locale: 'en-HK',
   timezone: 'Asia/Hong_Kong',
   defaultUrl: 'http://localhost:3000',

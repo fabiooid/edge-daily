@@ -4,7 +4,7 @@ export function mapSourceType(access: string, name: string): SourceType {
   const a = access.toLowerCase().trim()
   const n = name.toLowerCase()
 
-  if (n.includes('hugging face org release')) return 'huggingface'
+  if (n.includes('hugging face')) return 'huggingface'
   if (n.includes('daily papers')) return 'huggingface_papers'
   if (n.includes('trending models')) return 'huggingface_trending'
   if (n.includes('algolia')) return 'hackernews'

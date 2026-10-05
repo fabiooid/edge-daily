@@ -12,7 +12,7 @@ export default function SignupBand() {
             Get the AI week, wherever it lands
           </h2>
           <p className="mt-3 max-w-xl text-base leading-7 text-muted-foreground">
-            One short briefing a week. The stories that matter, written in plain language,
+            One short briefing a week. Hand-picked stories, not a dump of headlines,
             with a local read on the place each one lands.
           </p>
         </div>

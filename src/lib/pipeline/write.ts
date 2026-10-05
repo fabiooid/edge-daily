@@ -32,13 +32,13 @@ function mockStory(item: RankedCluster, extras: RankedCluster[]): StoryInput {
 
   const place = item.hasGeographicStakes ? item.region || 'this place' : 'wherever you work'
   const asiaAngle = item.isAsia
-    ? 'This is a regional story, so teams on the ground can treat it as a local product, policy or model move rather than distant news.'
+    ? 'Do not file this as distant news. It is a local product, policy or model move for teams on the ground.'
     : null
 
   return {
     headline: item.title.replace(/—|–/g, '-'),
-    body: `${item.title} landed inside this week's window. The official account or publisher described a concrete change, not a rumour. We are using the primary link plus a second briefing so the facts can be checked.\n\nWhat is new is limited to what those sources state. Anything they do not say is left out.`,
-    whyItMatters: `If you work with AI in ${place}, this changes what you can use, buy or plan for this week. Read the sources before you brief anyone.`,
+    body: `${item.title} is in this edition because it changes a plan, not because it filled a homepage. The publisher put a concrete change on the record this week. That is the bar.\n\nRead the primary source first. The second link is only there so you can hear the same facts in another voice. If neither says it, it does not belong here.\n\nThe take is simple. Treat this as local if it has a place. Treat it as a planning problem if it does not. Either way, brief people with the source in hand.`,
+    whyItMatters: `If you work with AI in ${place}, this is not background noise. It changes what you can use, buy or ignore this week.`,
     asiaAngle,
     isAsia: item.isAsia,
     citations,
@@ -63,7 +63,10 @@ export async function writeStories(
 
   for (const item of picked) {
     const supports = all.filter((row) => row.id !== item.id).slice(0, 3)
-    const prompt = `Write one Meridian story for a smart non-specialist, anywhere in the world.
+    const prompt = `You are writing for Meridian, an opinionated weekly AI briefing. The line is: the AI week, wherever it lands.
+
+Write one story for a smart non-specialist, anywhere in the world. Have a point of view. Do not write wire copy or a press-release restatement. Be specific about who should care and why. Stay inside the facts of the sources. Do not invent quotes, numbers, or motives.
+
 Compile time: ${context.compileAt.toISOString()}
 Primary item: ${item.title} (${item.region}, ${item.tier})
 Supporting items: ${supports.map((row) => row.title).join('; ') || 'none'}
@@ -71,10 +74,11 @@ Supporting items: ${supports.map((row) => row.title).join('; ') || 'none'}
 Rules:
 - Australian/British spelling
 - No em dashes
-- No hype words such as revolutionary or game-changing
-- 2 or 3 short sentences for what happened
-- A why it matters line of 1 or 2 sentences for the reader where this story lands (country or region if the sources name one; otherwise a global reader)
-- Local angle (asiaAngle) only if the sources support a place-specific read
+- No hype words such as revolutionary, game-changing, or groundbreaking
+- Headline with a take, not a bland summary
+- Body: 2 to 4 short paragraphs, about 80 to 180 words. What happened, then what it means.
+- whyItMatters: 1 or 2 sentences with a clear take for the reader where this story lands (country or region if the sources name one; otherwise a global reader)
+- asiaAngle: a place-specific read only if the sources support it, else null
 - Return JSON with headline, body, whyItMatters, asiaAngle (string or null), isAsia (boolean; true when the story has a clear Asia stake)`
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -86,7 +90,7 @@ Rules:
       },
       body: JSON.stringify({
         model: models.writing,
-        max_tokens: 800,
+        max_tokens: 1200,
         messages: [{ role: 'user', content: prompt }],
       }),
     })

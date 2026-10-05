@@ -99,7 +99,7 @@ npm run demo
 npm run dev
 ```
 
-`npm run demo` migrates, seeds the vetted sources, and publishes a mock Week 1 edition so you can click through the site without API keys.
+`npm run demo` migrates, seeds the hand-picked sources, and publishes a mock Week 1 edition so you can click through the site without API keys.
 
 ### Pipeline CLI
 
@@ -129,17 +129,14 @@ npx tsx scripts/pipeline.ts remind
 
 ## Sources
 
-The vetted list lives in `data/sources.csv`. Seed it with `npm run db:seed-sources`.
+The hand-picked list lives in `data/sources.csv`. Seed it with `npm run db:seed-sources`. That list is the default: a short set of labs and newsrooms, plus Hacker News as a signal. Adding a source is a curation choice. The product does not ingest a giant scrape.
 
-Milestone 1 turns on the Top 10 plus Hacker News (Algolia) as a signal source. Everything else is stored and paused.
-
-Supported source types:
+Supported source types for that list:
 
 - RSS / Atom
 - Hugging Face models API, filtered by author org
 - Hacker News via Algolia (signal only: never cited; missing HN attention does not lower a story)
-- X, behind `FEATURE_X_SOURCES`, seeded with 25 accounts and search queries, all paused
-- Scrape / email placeholders so a later adapter can plug in
+- X stays off unless `FEATURE_X_SOURCES` is on
 
 ## Historical posts
 

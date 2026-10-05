@@ -18,6 +18,7 @@ export const pipelineConfig = {
   compileHourHkt: 18,
   sendWeekdayHkt: 2,
   sendHourHkt: 8,
+  maxHandPickedSources: 12,
 } as const
 
 export const featureFlags = {
