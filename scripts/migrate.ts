@@ -7,7 +7,7 @@ async function main() {
     throw new Error('DATABASE_URL is required in production')
   }
   if (!process.env.DATABASE_URL) {
-    const dataDir = process.env.PGLITE_PATH || '.data/edge-weekly'
+    const dataDir = process.env.PGLITE_PATH || '.data/meridian'
     await mkdir(path.dirname(dataDir), { recursive: true })
   }
   const file = path.join(process.cwd(), 'drizzle/migrations/0000_init.sql')

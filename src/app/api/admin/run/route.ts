@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       await sendTelegramPreview({
         editionWeek: result.editionWeek,
         storyCount: result.storyCount,
-        headlines: result.checks.filter((check) => check.name === 'style' && check.passed).map((check) => check.detail),
+        headlines: result.headlines,
         previewToken: result.previewToken,
         passed: result.passed,
       })

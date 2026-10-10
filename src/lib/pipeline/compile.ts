@@ -42,6 +42,7 @@ export type CompileResult = {
   status: string
   previewToken: string
   storyCount: number
+  headlines: string[]
   passed: boolean
   autoPublished: boolean
   publishReason: string
@@ -332,6 +333,7 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
     status: saved[0]?.status || status,
     previewToken: saved[0]?.previewToken || token,
     storyCount: checks.surviving.length,
+    headlines: checks.surviving.map((story) => story.headline),
     passed: checks.passed,
     autoPublished: decision.autoPublished,
     publishReason: decision.reason,

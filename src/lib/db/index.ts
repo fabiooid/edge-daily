@@ -43,7 +43,7 @@ export async function getHandle(): Promise<Handle> {
   const { PGlite } = await import('@electric-sql/pglite')
   const { vector } = await import('@electric-sql/pglite/vector')
   const { drizzle: drizzlePglite } = await import('drizzle-orm/pglite')
-  const dataDir = process.env.PGLITE_PATH || '.data/edge-weekly'
+  const dataDir = process.env.PGLITE_PATH || '.data/meridian'
   await mkdir(path.dirname(dataDir), { recursive: true })
   const client = new PGlite(dataDir, { extensions: { vector } })
   cached = {

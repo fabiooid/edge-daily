@@ -12,7 +12,7 @@ function run(command: string, args: string[]) {
 
 async function main() {
   process.env.ALLOW_PGLITE = process.env.ALLOW_PGLITE || 'true'
-  process.env.PGLITE_PATH = process.env.PGLITE_PATH || '.data/edge-weekly'
+  process.env.PGLITE_PATH = process.env.PGLITE_PATH || '.data/meridian'
   await run('npx', ['tsx', 'scripts/migrate.ts'])
   await run('npx', ['tsx', 'scripts/seed-sources.ts'])
   await run('npx', ['tsx', 'scripts/seed-demo-edition.ts'])
