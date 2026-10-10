@@ -11,7 +11,11 @@ export async function POST(request: Request) {
     return Response.json({ error: auth.error }, { status: auth.status })
   }
 
-  const body = (await request.json().catch(() => ({}))) as { job?: string; mock?: boolean }
+  const body = (await request.json().catch(() => ({}))) as {
+    job?: string
+    mock?: boolean
+    force?: boolean
+  }
   const job = body.job || new URL(request.url).searchParams.get('job')
 
   if (job === 'ingest') {
@@ -20,12 +24,21 @@ export async function POST(request: Request) {
   }
 
   if (job === 'compile') {
-    const result = await compileEdition({ mock: body.mock })
+    let result
+    try {
+      result = await compileEdition({ mock: body.mock, force: body.force })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Compile failed'
+      return Response.json({ error: message }, { status: 400 })
+    }
+    if (result.unchanged) {
+      return Response.json(result)
+    }
     if (result.passed && !result.autoPublished) {
       await sendTelegramPreview({
         editionWeek: result.editionWeek,
         storyCount: result.storyCount,
-        headlines: result.checks.filter((check) => check.name === 'style' && check.passed).map((check) => check.detail),
+        headlines: result.headlines,
         previewToken: result.previewToken,
         passed: result.passed,
       })

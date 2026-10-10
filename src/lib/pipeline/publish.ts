@@ -1,7 +1,8 @@
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { getDb } from '../db'
-import { approvals, editions } from '../db/schema'
+import { approvals, editions, evalRuns } from '../db/schema'
 import { id } from '../ids'
+import { canApproveEdition } from './approve'
 
 export async function applyEditionAction(input: {
   editionWeek: string
@@ -15,9 +16,14 @@ export async function applyEditionAction(input: {
   if (!edition) return { ok: false, status: 'missing', error: 'Edition not found' }
 
   if (input.action === 'approve') {
-    const evalPassed = edition.status === 'in_review' || edition.status === 'draft'
-    if (!evalPassed && edition.status !== 'held') {
-      return { ok: false, status: edition.status, error: 'This edition cannot be approved in its current state' }
+    const [run] = await db
+      .select()
+      .from(evalRuns)
+      .where(eq(evalRuns.editionId, edition.id))
+      .orderBy(desc(evalRuns.createdAt))
+    const gate = canApproveEdition({ status: edition.status, evalPassed: Boolean(run?.passed) })
+    if (!gate.ok) {
+      return { ok: false, status: edition.status, error: gate.error }
     }
     await db
       .update(editions)

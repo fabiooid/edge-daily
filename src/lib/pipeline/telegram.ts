@@ -24,15 +24,16 @@ export function buildPreviewMessage(input: {
     '',
     `Preview: ${url}`,
   ]
-  return {
-    text: lines.join('\n'),
-    buttons: [
-      [
+  const reviewRow: InlineButton[] = input.passed
+    ? [
         { text: 'Approve', callback_data: `approve:${input.editionWeek}` },
         { text: 'Reject', callback_data: `reject:${input.editionWeek}` },
-      ],
-      [{ text: 'Request changes', callback_data: `changes:${input.editionWeek}` }],
-    ],
+      ]
+    : [{ text: 'Reject', callback_data: `reject:${input.editionWeek}` }]
+
+  return {
+    text: lines.join('\n'),
+    buttons: [reviewRow, [{ text: 'Request changes', callback_data: `changes:${input.editionWeek}` }]],
   }
 }
 

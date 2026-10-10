@@ -1,4 +1,5 @@
 import Parser from 'rss-parser'
+import { sourceIsPaywalled } from '../checks'
 import { parsePublishedDate } from '../window'
 import type { IngestedItem, SourceAdapter } from './types'
 
@@ -22,7 +23,7 @@ export const rssAdapter: SourceAdapter = {
       title: item.title || 'Untitled',
       publishedAt: parsePublishedDate(item.isoDate || item.pubDate),
       excerpt: item.contentSnippet || item.summary || undefined,
-      isPaywalled: source.paywall === 'yes' || source.paywall === 'partial (metered)',
+      isPaywalled: sourceIsPaywalled(source.paywall),
     })).filter((item) => item.url)
   },
 }

@@ -11,6 +11,7 @@ export type EditionStoryView = {
   whyItMatters: string
   asiaAngle: string | null
   isAsia: boolean
+  place: string
   citations: { title: string; url: string; isPrimary: boolean }[]
 }
 
@@ -79,6 +80,7 @@ async function hydrateEdition(editionId: string): Promise<EditionView> {
       whyItMatters: story.whyItMatters,
       asiaAngle: story.asiaAngle,
       isAsia: story.isAsia,
+      place: story.place || 'Global',
       citations: cites.map((cite) => ({
         title: cite.title,
         url: cite.url,

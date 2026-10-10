@@ -22,7 +22,10 @@ import {
   resolvePublishSettings,
   type HistoryEdition,
 } from './auto-publish'
-import { runBlockingChecks, type StoryInput } from './checks'
+import { runBlockingChecks, sourceIsPaywalled, type StoryInput } from './checks'
+import { buildStoryClusters, isRepeatStory } from './cluster'
+import { assertWritingKey, canReplaceEdition, liveEditionReason } from './compile-guard'
+import { isAsiaPlace, isStoredPlace, placeFromSourceRegion } from './place'
 import { rankItems, pickTopStories, type RankableItem } from './rank'
 import { writeStories } from './write'
 import { freshnessWindow, hongKongDateParts, nextTuesdayEightHkt } from './window'
@@ -34,6 +37,7 @@ export type CompileOptions = {
   publishDemo?: boolean
   compileAt?: Date
   allowShort?: boolean
+  force?: boolean
 }
 
 export type CompileResult = {
@@ -42,9 +46,11 @@ export type CompileResult = {
   status: string
   previewToken: string
   storyCount: number
+  headlines: string[]
   passed: boolean
   autoPublished: boolean
   publishReason: string
+  unchanged?: boolean
   checks: { name: string; passed: boolean; detail: string }[]
 }
 
@@ -86,6 +92,25 @@ async function loadEditionHistory(editionWeek: string): Promise<HistoryEdition[]
   return history
 }
 
+async function loadPriorHeadlines(compileAt: Date, currentWeek: string): Promise<string[]> {
+  const db = await getDb()
+  const cutoff = new Date(compileAt.getTime() - pipelineConfig.noveltyWeeks * 7 * 24 * 60 * 60 * 1000)
+  const rows = await db
+    .select({
+      headline: editionStories.headline,
+      editionWeek: editions.editionWeek,
+      publishedAt: editions.publishedAt,
+      status: editions.status,
+    })
+    .from(editionStories)
+    .innerJoin(editions, eq(editionStories.editionId, editions.id))
+    .where(eq(editions.status, 'published'))
+
+  return rows
+    .filter((row) => row.editionWeek !== currentWeek && row.publishedAt && row.publishedAt >= cutoff)
+    .map((row) => row.headline)
+}
+
 export async function compileEdition(options: CompileOptions = {}): Promise<CompileResult> {
   const compileAt = options.compileAt || new Date()
   const window = freshnessWindow(compileAt)
@@ -105,6 +130,33 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
     })),
     isoWeek,
   )
+  const existing = await db.select().from(editions).where(eq(editions.editionWeek, editionWeek))
+  if (existing[0] && !canReplaceEdition(existing[0].status, Boolean(options.force))) {
+    const savedStories = await db
+      .select({ headline: editionStories.headline })
+      .from(editionStories)
+      .where(eq(editionStories.editionId, existing[0].id))
+    return {
+      editionId: existing[0].id,
+      editionWeek,
+      status: existing[0].status,
+      previewToken: existing[0].previewToken,
+      storyCount: savedStories.length,
+      headlines: savedStories.map((story) => story.headline),
+      passed: existing[0].status === 'published' || existing[0].status === 'in_review',
+      autoPublished: false,
+      publishReason: liveEditionReason(existing[0].status),
+      unchanged: true,
+      checks: [],
+    }
+  }
+
+  assertWritingKey({
+    mock: options.mock || options.dryRun,
+    dryRun: options.dryRun,
+    hasKey: Boolean(process.env.ANTHROPIC_API_KEY),
+  })
+
   const publishSettings = await loadPublishSettings()
   const mode = publishSettings.mode
 
@@ -123,7 +175,7 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
       ),
     )
 
-  const rankable: RankableItem[] = rows
+  const clusterable = rows
     .filter((row) => row.item.publishedAt)
     .map((row) => ({
       id: row.item.id,
@@ -134,31 +186,48 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
       publishedAt: row.item.publishedAt,
       isSignal: row.item.isSignal,
       hnPoints: row.item.hnPoints,
+      url: row.item.url,
+      excerpt: row.item.excerpt,
+      canonicalUrl: row.item.canonicalUrl,
+      isPaywalled: row.item.isPaywalled || sourceIsPaywalled(row.source.paywall),
+      sourceId: row.item.sourceId,
     }))
+
+  const clustered = buildStoryClusters(clusterable)
+  const priorHeadlines = await loadPriorHeadlines(compileAt, editionWeek)
+  const novel = clustered.filter((item) => !isRepeatStory(item.title, priorHeadlines))
+  const rankable: RankableItem[] = novel.map((item) => ({
+    ...item,
+    place: placeFromSourceRegion(item.region),
+  }))
 
   const ranked = rankItems(rankable, compileAt)
   const picked = pickTopStories(ranked, pipelineConfig.maxStories)
-  const drafted = await writeStories(picked, ranked, { compileAt, mock: options.mock || options.dryRun })
+  const drafted = await writeStories(picked, { compileAt, mock: options.mock || options.dryRun })
 
   const storiesWithRealLinks: StoryInput[] = drafted.map((story, index) => {
     const primary = picked[index]
-    const row = rows.find((entry) => entry.item.id === primary?.id)
-    const support = rows.find((entry) => entry.item.id !== primary?.id && !entry.item.isSignal)
+    const support = primary?.support
     return {
       ...story,
+      place: story.place || primary?.place,
       citations: [
         {
-          title: row?.item.title || story.citations[0]?.title || story.headline,
-          url: row?.item.url || story.citations[0]?.url || 'https://example.com',
+          title: primary?.title || story.citations[0]?.title || story.headline,
+          url: primary?.url || story.citations[0]?.url || 'https://example.com',
           isPrimary: true,
-          publishedAt: row?.item.publishedAt || primary?.publishedAt || null,
+          publishedAt: primary?.publishedAt || null,
+          isPaywalled: primary?.isPaywalled,
         },
-        {
-          title: support?.item.title || story.citations[1]?.title || `${story.headline} coverage`,
-          url: support?.item.url || story.citations[1]?.url || 'https://example.com/coverage',
-          publishedAt: support?.item.publishedAt || primary?.publishedAt || null,
-        },
-      ].filter((citation, citationIndex, list) => list.findIndex((item) => item.url === citation.url) === citationIndex),
+        support
+          ? {
+              title: support.title,
+              url: support.url,
+              publishedAt: support.publishedAt,
+              isPaywalled: support.isPaywalled,
+            }
+          : null,
+      ].filter((citation): citation is NonNullable<typeof citation> => Boolean(citation)),
     }
   })
 
@@ -168,8 +237,7 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
   })
 
   const token = previewToken()
-  const editionId = hashId('ed', editionWeek)
-  const existing = await db.select().from(editions).where(eq(editions.editionWeek, editionWeek))
+  const editionId = existing[0]?.id || hashId('ed', editionWeek)
   const history = await loadEditionHistory(editionWeek)
   const decision = options.publishDemo
     ? { status: 'published' as const, reason: 'demo publish', autoPublished: false }
@@ -261,7 +329,10 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
   for (const [index, story] of checks.surviving.entries()) {
     const storyId = id('story')
     const editionStoryId = id('estory')
-    const pickedItem = picked[index]
+    const pickedItem = picked.find((item) => item.title === story.citations[0]?.title) || picked[index]
+    const place = isStoredPlace(story.place)
+      ? story.place
+      : pickedItem?.place || placeFromSourceRegion(pickedItem?.region)
     await db.insert(stories).values({
       id: storyId,
       title: story.headline,
@@ -285,7 +356,8 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
       storyId,
       position: index + 1,
       section: 'main',
-      isAsia: Boolean(story.isAsia),
+      isAsia: isAsiaPlace(place),
+      place,
       slug: uniqueSlug(story.headline, index),
       headline: story.headline,
       body: story.body,
@@ -297,7 +369,7 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
         id: id('cite'),
         editionStoryId,
         sentenceIndex: citationIndex,
-        itemId: pickedItem?.id,
+        itemId: citationIndex === 0 ? pickedItem?.id : pickedItem?.support?.id,
         title: citation.title,
         url: citation.url,
         isPrimary: Boolean(citation.isPrimary),
@@ -332,6 +404,7 @@ export async function compileEdition(options: CompileOptions = {}): Promise<Comp
     status: saved[0]?.status || status,
     previewToken: saved[0]?.previewToken || token,
     storyCount: checks.surviving.length,
+    headlines: checks.surviving.map((story) => story.headline),
     passed: checks.passed,
     autoPublished: decision.autoPublished,
     publishReason: decision.reason,

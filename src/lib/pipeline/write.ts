@@ -1,85 +1,94 @@
 import { models } from '../../../config/models'
 import type { CitationInput, StoryInput } from './checks'
+import { isAsiaPlace, placeFromSourceRegion } from './place'
 import type { RankedCluster } from './rank'
+import type { StoryRegion } from '../story-meta'
 
 export type WriteContext = {
   compileAt: Date
   mock?: boolean
 }
 
-function mockStory(item: RankedCluster, extras: RankedCluster[]): StoryInput {
+function citationsFor(item: RankedCluster): CitationInput[] {
+  const primaryUrl = item.url || `https://example.com/${item.id}`
   const citations: CitationInput[] = [
     {
       title: item.title,
-      url: `https://example.com/${item.id}`,
+      url: primaryUrl,
       isPrimary: true,
       publishedAt: item.publishedAt,
+      isPaywalled: item.isPaywalled,
     },
   ]
-  if (extras[0]) {
+  if (item.support) {
     citations.push({
-      title: extras[0].title,
-      url: `https://example.com/${extras[0].id}`,
-      publishedAt: extras[0].publishedAt,
-    })
-  } else {
-    citations.push({
-      title: `${item.title} briefing`,
-      url: `https://example.com/${item.id}-briefing`,
-      publishedAt: item.publishedAt,
+      title: item.support.title,
+      url: item.support.url,
+      publishedAt: item.support.publishedAt,
+      isPaywalled: item.support.isPaywalled,
     })
   }
+  return citations
+}
 
-  const place = item.hasGeographicStakes ? item.region || 'this place' : 'wherever you work'
-  const asiaAngle = item.isAsia
-    ? 'Do not file this as distant news. It is a local product, policy or model move for teams on the ground.'
-    : null
+function mockStory(item: RankedCluster): StoryInput {
+  const place = item.place || placeFromSourceRegion(item.region)
+  const excerpt = item.excerpt?.trim()
+  const body = excerpt
+    ? `${item.title} is in this edition because it changes a plan, not because it filled a homepage. The publisher put a concrete change on the record this week. That is the bar.\n\n${excerpt}\n\nRead the primary source first. A second link is only here when another outlet covered the same launch. If the source does not say it, it does not belong here.`
+    : `${item.title} is in this edition because it changes a plan, not because it filled a homepage. The publisher put a concrete change on the record this week. That is the bar.\n\nRead the primary source first. A second link is only here when another outlet covered the same launch. If the source does not say it, it does not belong here.\n\nThe take is simple. Treat this as local if it has a place. Treat it as a planning problem if it does not. Either way, brief people with the source in hand.`
 
   return {
     headline: item.title.replace(/—|–/g, '-'),
-    body: `${item.title} is in this edition because it changes a plan, not because it filled a homepage. The publisher put a concrete change on the record this week. That is the bar.\n\nRead the primary source first. The second link is only there so you can hear the same facts in another voice. If neither says it, it does not belong here.\n\nThe take is simple. Treat this as local if it has a place. Treat it as a planning problem if it does not. Either way, brief people with the source in hand.`,
+    body,
     whyItMatters: `If you work with AI in ${place}, this is not background noise. It changes what you can use, buy or ignore this week.`,
-    asiaAngle,
-    isAsia: item.isAsia,
-    citations,
+    asiaAngle: null,
+    isAsia: isAsiaPlace(place),
+    place,
+    citations: citationsFor(item),
   }
 }
 
-export async function writeStories(
-  picked: RankedCluster[],
-  all: RankedCluster[],
-  context: WriteContext,
-): Promise<StoryInput[]> {
-  if (context.mock || !process.env.ANTHROPIC_API_KEY) {
-    return picked.map((item, index) =>
-      mockStory(
-        item,
-        all.filter((row) => row.id !== item.id).slice(index, index + 1),
-      ),
+export async function writeStories(picked: RankedCluster[], context: WriteContext): Promise<StoryInput[]> {
+  if (context.mock) {
+    return picked.map((item) => mockStory(item))
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error(
+      'ANTHROPIC_API_KEY is required to compile a real edition. Use --mock or --dry-run for a local demo.',
     )
   }
 
   const stories: StoryInput[] = []
 
   for (const item of picked) {
-    const supports = all.filter((row) => row.id !== item.id).slice(0, 3)
+    const place: StoryRegion = item.place || placeFromSourceRegion(item.region)
+    const support = item.support
     const prompt = `You are writing for Meridian, an opinionated weekly AI briefing. The line is: the AI week, wherever it lands.
 
 Write one story for a smart non-specialist, anywhere in the world. Have a point of view. Do not write wire copy or a press-release restatement. Be specific about who should care and why. Stay inside the facts of the sources. Do not invent quotes, numbers, or motives.
 
 Compile time: ${context.compileAt.toISOString()}
-Primary item: ${item.title} (${item.region}, ${item.tier})
-Supporting items: ${supports.map((row) => row.title).join('; ') || 'none'}
+Place for this story (use this, do not guess another country from company names): ${place}
+Primary source: ${item.title}
+URL: ${item.url || 'unknown'}
+Published: ${item.publishedAt?.toISOString() || 'unknown'}
+Excerpt: ${item.excerpt || 'none provided'}
+Second source (same launch, independent outlet): ${
+      support
+        ? `${support.title} | ${support.url} | ${support.excerpt || 'no excerpt'}`
+        : 'none. Do not invent one.'
+    }
 
 Rules:
 - Australian/British spelling
 - No em dashes
 - No hype words such as revolutionary, game-changing, or groundbreaking
 - Headline with a take, not a bland summary
-- Body: 2 to 4 short paragraphs, about 80 to 180 words. What happened, then what it means.
-- whyItMatters: 1 or 2 sentences with a clear take for the reader where this story lands (country or region if the sources name one; otherwise a global reader)
-- asiaAngle: a place-specific read only if the sources support it, else null
-- Return JSON with headline, body, whyItMatters, asiaAngle (string or null), isAsia (boolean; true when the story has a clear Asia stake)`
+- Body: 2 to 4 short paragraphs, about 80 to 180 words. What happened, then what it means. Use only facts from the excerpts above.
+- whyItMatters: 1 or 2 sentences for a reader in ${place}
+- Return JSON with headline, body, whyItMatters, place (must be exactly "${place}")`
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -106,21 +115,10 @@ Rules:
       headline: String(json.headline || item.title).replace(/—|–/g, '-'),
       body: String(json.body || ''),
       whyItMatters: String(json.whyItMatters || ''),
-      asiaAngle: json.asiaAngle ? String(json.asiaAngle) : null,
-      isAsia: Boolean(json.isAsia) || item.isAsia,
-      citations: [
-        {
-          title: item.title,
-          url: `https://example.com/${item.id}`,
-          isPrimary: true,
-          publishedAt: item.publishedAt,
-        },
-        ...supports.slice(0, 1).map((row) => ({
-          title: row.title,
-          url: `https://example.com/${row.id}`,
-          publishedAt: row.publishedAt,
-        })),
-      ],
+      asiaAngle: null,
+      isAsia: isAsiaPlace(place),
+      place,
+      citations: citationsFor(item),
     })
   }
 

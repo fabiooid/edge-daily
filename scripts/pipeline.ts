@@ -42,12 +42,13 @@ async function remind() {
 
 async function main() {
   const job = jobName()
-  const mock = flag('mock') || flag('dry-run') || !process.env.ANTHROPIC_API_KEY
+  const mock = flag('mock') || flag('dry-run')
   const dryRun = flag('dry-run')
   const publishDemo = flag('publish-demo')
+  const force = flag('force')
 
   if (job === 'help' || job === '--help') {
-    console.log(`Usage: tsx scripts/pipeline.ts <ingest|compile|remind|cron> [--mock] [--dry-run]
+    console.log(`Usage: tsx scripts/pipeline.ts <ingest|compile|remind|cron> [--mock] [--dry-run] [--force]
 
 Railway cron: set PROCESS_ROLE=pipeline and PIPELINE_JOB=ingest|compile|remind
 `)
@@ -61,8 +62,12 @@ Railway cron: set PROCESS_ROLE=pipeline and PIPELINE_JOB=ingest|compile|remind
   }
 
   if (job === 'compile') {
-    const result = await compileEdition({ mock, dryRun, publishDemo })
+    const result = await compileEdition({ mock, dryRun, publishDemo, force })
     console.log(JSON.stringify(result, null, 2))
+    if (result.unchanged) {
+      console.log(result.publishReason)
+      return
+    }
     if (!dryRun && !publishDemo && !result.autoPublished) {
       await sendPreview(result.editionId, result.editionWeek, result.previewToken, result.passed)
     } else if (result.autoPublished) {
