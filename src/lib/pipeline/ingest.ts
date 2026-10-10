@@ -4,6 +4,7 @@ import { getDb } from '../db'
 import { items, sources } from '../db/schema'
 import { hashId } from '../ids'
 import { canonicalUrl } from './dedupe'
+import { mergeOnCanonicalConflict } from './ingest-merge'
 import { getAdapter } from './sources/registry'
 import type { SourceRecord } from './sources/types'
 import { freshnessWindow } from './window'
@@ -54,24 +55,63 @@ export async function ingestSources(options: { mock?: boolean; since?: Date } = 
           skipped += 1
           continue
         }
+        const incomingRow = {
+          sourceId: source.id,
+          url: item.url,
+          title: item.title,
+          excerpt: item.excerpt,
+          bodyText: item.bodyText,
+          isPaywalled: item.isPaywalled || false,
+          isSignal: item.isSignal || source.type === 'hackernews',
+          hnPoints: item.hnPoints,
+        }
         try {
-          await db
-            .insert(items)
-            .values({
-              id: hashId('item', canonical),
-              sourceId: source.id,
-              url: item.url,
-              canonicalUrl: canonical,
-              title: item.title,
-              publishedAt: item.publishedAt,
-              excerpt: item.excerpt,
-              bodyText: item.bodyText,
-              isPaywalled: item.isPaywalled || false,
-              isSignal: item.isSignal || source.type === 'hackernews',
-              lang: item.lang,
-              hnPoints: item.hnPoints,
-            })
-            .onConflictDoNothing({ target: items.canonicalUrl })
+          const existing = await db.select().from(items).where(eq(items.canonicalUrl, canonical)).limit(1)
+          if (existing[0]) {
+            const merged = mergeOnCanonicalConflict(
+              {
+                sourceId: existing[0].sourceId,
+                url: existing[0].url,
+                title: existing[0].title,
+                excerpt: existing[0].excerpt,
+                bodyText: existing[0].bodyText,
+                isSignal: existing[0].isSignal,
+                hnPoints: existing[0].hnPoints,
+                isPaywalled: existing[0].isPaywalled,
+              },
+              incomingRow,
+            )
+            await db
+              .update(items)
+              .set({
+                sourceId: merged.sourceId,
+                url: merged.url,
+                title: merged.title,
+                excerpt: merged.excerpt,
+                bodyText: merged.bodyText,
+                isSignal: merged.isSignal,
+                hnPoints: merged.hnPoints,
+                isPaywalled: merged.isPaywalled || false,
+              })
+              .where(eq(items.id, existing[0].id))
+            skipped += 1
+            continue
+          }
+
+          await db.insert(items).values({
+            id: hashId('item', canonical),
+            sourceId: source.id,
+            url: item.url,
+            canonicalUrl: canonical,
+            title: item.title,
+            publishedAt: item.publishedAt,
+            excerpt: item.excerpt,
+            bodyText: item.bodyText,
+            isPaywalled: item.isPaywalled || false,
+            isSignal: incomingRow.isSignal,
+            lang: item.lang,
+            hnPoints: item.hnPoints,
+          })
           stored += 1
         } catch {
           skipped += 1

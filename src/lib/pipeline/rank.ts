@@ -1,4 +1,6 @@
-import { isAsiaRegion } from './sources/map-type'
+import { isAsiaPlace, placeFromSourceRegion } from './place'
+import type { IndependentSupport } from './citations'
+import type { StoryRegion } from '../story-meta'
 
 export type RankableItem = {
   id: string
@@ -9,73 +11,23 @@ export type RankableItem = {
   publishedAt: Date | null
   isSignal: boolean
   hnPoints?: number | null
+  url?: string | null
+  excerpt?: string | null
+  canonicalUrl?: string | null
+  isPaywalled?: boolean
+  support?: IndependentSupport | null
+  place?: StoryRegion
 }
 
 export type RankedCluster = RankableItem & {
   score: number
   isAsia: boolean
   hasGeographicStakes: boolean
+  place: StoryRegion
 }
 
-const ASIA_HINTS = [
-  'hong kong',
-  'hkma',
-  'china',
-  'chinese',
-  'deepseek',
-  'qwen',
-  'kimi',
-  'glm',
-  'minimax',
-  'hunyuan',
-  'japan',
-  'korea',
-  'singapore',
-  'india',
-  'sea-lion',
-  'sarvam',
-  'sakana',
-  'asia',
-]
-
-const GEO_HINTS = [
-  ...ASIA_HINTS,
-  'europe',
-  'european',
-  'brussels',
-  'united states',
-  'u.s.',
-  'washington',
-  'white house',
-  'britain',
-  'united kingdom',
-  'london',
-  'africa',
-  'nigeria',
-  'kenya',
-  'brazil',
-  'mexico',
-  'latin america',
-  'middle east',
-  'uae',
-  'israel',
-  'canada',
-  'australia',
-]
-
-export function storyLooksAsian(title: string, region: string): boolean {
-  if (isAsiaRegion(region)) return true
-  const haystack = title.toLowerCase()
-  return ASIA_HINTS.some((hint) => haystack.includes(hint))
-}
-
-export function hasGeographicStakes(title: string, region: string): boolean {
-  if (storyLooksAsian(title, region)) return true
-  const haystack = `${title} ${region}`.toLowerCase().trim()
-  if (GEO_HINTS.some((hint) => haystack.includes(hint))) return true
-  const value = region.toLowerCase().trim()
-  if (!value || value === 'global') return false
-  return true
+export function hasGeographicStakes(_title: string, region: string): boolean {
+  return placeFromSourceRegion(region) !== 'Global'
 }
 
 /**
@@ -99,12 +51,16 @@ export function rankScore(item: RankableItem, compileAt: Date): number {
 
 export function rankItems(items: RankableItem[], compileAt: Date): RankedCluster[] {
   return items
-    .map((item) => ({
-      ...item,
-      isAsia: storyLooksAsian(item.title, item.region),
-      hasGeographicStakes: hasGeographicStakes(item.title, item.region),
-      score: rankScore(item, compileAt),
-    }))
+    .map((item) => {
+      const place = item.place || placeFromSourceRegion(item.region)
+      return {
+        ...item,
+        place,
+        isAsia: isAsiaPlace(place),
+        hasGeographicStakes: hasGeographicStakes(item.title, item.region),
+        score: rankScore(item, compileAt),
+      }
+    })
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score
       if (a.hasGeographicStakes !== b.hasGeographicStakes) {

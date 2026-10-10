@@ -7,82 +7,53 @@ date: 2026-10-10
 
 ## Summary
 
-The site and weekly pipeline are far enough along to demo, but they are not ready to ship a real Tuesday edition.
+The site and weekly pipeline are far enough along to demo, but they are not ready to ship a real Tuesday edition until Railway is set up.
 
-The reader-facing magazine layout, About page, Week 1 numbering, SVG covers, and Telegram approve flow match the product intent. The weekly engine underneath does not. Selection is “highest source weight,” not an editorial pick. Place tags are guessed from keywords. A second source is often an unrelated leftover item. Hacker News can hide an official story. Re-running compile can take a live edition offline. If the Anthropic key is missing, the pipeline silently writes mock copy.
+The reader-facing magazine layout, About page, Week 1 numbering, and SVG covers match the product intent. This PR now also locks the five highest-risk pipeline holes: live weeks cannot be overwritten, mock copy cannot ship without `--mock`, Hacker News is a signal on the official story, the same launch is one story with a real second outlet, place is stored, paywalled 403s no longer drop a story, and Approve cannot skip a failed check.
 
 Railway, Postgres, Telegram, the Anthropic key, and crons are still unset. Do not turn on `PUBLISH_MODE=auto` until Fabio has approved several real weeks by hand.
-
-This PR only changes leftover `edge-weekly` names and one broken Telegram headline line. Bigger fixes are listed below, not done.
 
 ## Issues
 
 ### Critical
 
-**C1. Re-running the weekly compile can take a live edition offline**
+**C1. Re-running the weekly compile can take a live edition offline** — fixed
 
-`compileEdition` reuses the same Week number when it runs again in the same Hong Kong ISO week. It then overwrites status. In the default manual mode a passing re-run sets the edition back to `in_review` and clears the publish time. A failed re-run sets it to `draft`. The public homepage would go empty.
+Published and in-review weeks are left alone unless `--force` is passed. Drafts can still be replaced. Tests: `tests/compile-guard.test.ts`.
 
-- Files: `src/lib/pipeline/compile.ts` (existing-week lookup, `onConflictDoUpdate`), `src/lib/pipeline/auto-publish.ts`, `src/lib/pipeline/week.ts`
-- Suggested fix: If that week is already `published` or `in_review`, refuse to overwrite unless Fabio passes an explicit `--force` (or a “replace draft only” flag). Never clear `publishedAt` on a live week.
+**C2. A missing Anthropic key writes fake copy as if it were real** — fixed
 
-**C2. A missing Anthropic key writes fake copy as if it were real**
-
-If `ANTHROPIC_API_KEY` is unset, both the CLI and the writer fall back to mock stories. Railway cron would still save an edition and can still send Telegram. Fabio could approve generic filler with real-looking source links.
-
-- Files: `scripts/pipeline.ts` (mock default), `src/lib/pipeline/write.ts` (`!process.env.ANTHROPIC_API_KEY`)
-- Suggested fix: Mock only when `--mock` / `--dry-run` is set. In production, stop compile if the key is missing.
+Mock copy runs only with `--mock` or `--dry-run`. A real compile without `ANTHROPIC_API_KEY` stops. Tests: `tests/compile-guard.test.ts`.
 
 ### High
 
-**H1. Every story can get the same unrelated second source**
+**H1. Every story can get the same unrelated second source** — fixed
 
-After writing, compile attaches citations by taking the picked item plus the first other non-signal item in the whole week. Almost every story then cites the same leftover article. The “two sources” check still passes.
+A second link is used only when another outlet covered the same launch. If there is none, the story has one primary source. Tests: `tests/citations.test.ts`, `tests/cluster.test.ts`.
 
-- Files: `src/lib/pipeline/compile.ts` (`storiesWithRealLinks`), `src/lib/pipeline/write.ts`
-- Suggested fix: Pair a story only with coverage of the same event (same URL family, shared title tokens, or a stored cluster). If there is no second source, say so. Do not invent a roommate.
+**H2. Hacker News can hide the official story, and its score almost never helps** — fixed
 
-**H2. Hacker News can hide the official story, and its score almost never helps**
+On a URL clash, the official row wins and keeps HN points. Compile also attaches HN points when titles match. Tests: `tests/ingest-merge.test.ts`, `tests/cluster.test.ts`.
 
-Ingest stores items by canonical URL and keeps the first one. If HN sees a launch before the lab RSS, the official item is skipped and the HN row is marked “signal only,” so selection drops it. HN points also never copy onto the matching lab story, so the “HN can raise a score” rule barely runs.
+**H3. Approve still works after blocking checks fail** — fixed
 
-- Files: `src/lib/pipeline/ingest.ts` (`onConflictDoNothing`), `src/lib/pipeline/sources/hackernews.ts`, `src/lib/pipeline/rank.ts`
-- Suggested fix: Prefer a non-signal row on conflict. Store HN as a signal attached to the article URL, not as the article itself.
+Approve reads the latest eval run. Telegram hides Approve when checks failed. Tests: `tests/publish.test.ts`.
 
-**H3. Approve still works after blocking checks fail**
+**H4. Same event can appear twice, and last week can appear again** — fixed
 
-Failed checks save the edition as `draft`. Telegram still shows Approve. `applyEditionAction` allows `draft` and `in_review`. The message says not to approve, but the button publishes anyway.
+Stories cluster by canonical URL or title overlap. Published headlines from the last six weeks are skipped. Embeddings are still unused. Tests: `tests/cluster.test.ts`.
 
-- Files: `src/lib/pipeline/publish.ts`, `src/app/api/telegram/webhook/route.ts`, `src/lib/pipeline/telegram.ts`
-- Suggested fix: Approve only when the latest eval run passed, or disable the Approve button when checks failed.
+**H5. “Wherever it lands” is still an Asia leftover guessed from words** — fixed
 
-**H4. Same event can appear twice, and last week can appear again**
+Each story stores `place` from the source region. Badges and covers read that field. Company names in the write-up no longer retag a story. `asiaAngle` remains as an unused leftover column. Tests: `tests/place.test.ts`.
 
-There is no cluster of “this is the same launch.” `noveltyWeeks: 6` is configured and unused. Embeddings exist on the schema and are never written. `pickTopStories` just takes the next highest weights.
+**H6. The writer never sees the actual article** — fixed
 
-- Files: `src/lib/pipeline/rank.ts`, `src/lib/pipeline/dedupe.ts`, `config/pipeline.ts`, `src/lib/db/schema.ts`
-- Suggested fix: Cluster by canonical URL and a simple title match before picking. Skip stories that ran in the last six weeks.
+The prompt now gets URL, date, excerpt, stored place, and an independent second source when one exists. Tests: `tests/citations.test.ts`.
 
-**H5. “Wherever it lands” is still an Asia leftover guessed from words**
+**H7. Paywalled core sources can knock a good story out** — fixed
 
-The product wants a place badge, a cover palette, and “why it matters here.” The pipeline still stores `isAsia` / `asiaAngle`. The reader site then guesses country from words in the finished text. A US lab story can be tagged China because the write-up mentions DeepSeek. Place is not a first-class field Fabio can correct.
-
-- Files: `src/lib/pipeline/write.ts`, `src/lib/story-meta.ts`, `src/lib/story-view.ts`, `src/lib/db/schema.ts`, `src/app/editions/[week]/[slug]/page.tsx`
-- Suggested fix: Store `place` on each story (country or region, or Global). Drive the badge, palette, and “why it matters here” from that field. Keep `asiaAngle` only as a migration leftover until you drop it.
-
-**H6. The writer never sees the actual article**
-
-The live prompt gets a title, a source region, and three other titles. No excerpt, no URL, no body. That produces thin voice and made-up links (later overwritten). Ranking is source weight plus freshness, not “does this change a plan.”
-
-- Files: `src/lib/pipeline/write.ts`, `src/lib/pipeline/rank.ts`, `src/lib/pipeline/sources/rss.ts`
-- Suggested fix: Pass the primary URL, date, and excerpt into the prompt. Ask for a take, then a fact check against those excerpts only.
-
-**H7. Paywalled core sources can knock a good story out**
-
-SCMP and Tech in Asia are on the hand-picked list and marked partial paywall. The blocking link check does a live GET. A 403/401 drops the whole story, which can leave a thin week.
-
-- Files: `src/lib/pipeline/checks.ts` (`checkLinksResolve`), `data/sources.csv`
-- Suggested fix: Treat 401/403 from a known paywall source as “link exists.” Fail only on timeouts and hard 404s.
+401/403 from a paywalled citation counts as “the link exists.” 404s and timeouts still fail. Tests: `tests/checks.test.ts`.
 
 **H8. First migrate can fail on Postgres without pgvector**
 
@@ -213,12 +184,12 @@ Ranked by impact for a first real edition versus effort.
 
 | Rank | Opportunity | Impact | Effort | Why |
 | --- | --- | --- | --- | --- |
-| 1 | Guard re-runs and require a real Anthropic key | High | Low | Stops the two ways to ship or unpublish by accident |
-| 2 | Cluster stories and attach HN as signal | High | Medium | Stops dupes and silent drops of lab posts |
-| 3 | Real citations + excerpts in the writer | High | Medium | Voice and “two sources” become true |
-| 4 | Store place on the story | High | Medium | Badge, cover, and “why it matters here” stay consistent |
-| 5 | Paywall-aware link check + source failure Telegram | High | Low | SCMP/TIA weeks stop collapsing |
-| 6 | Approve only after checks pass | High | Low | Telegram cannot override a failed gate by habit |
+| 1 | Guard re-runs and require a real Anthropic key | High | Low | Done |
+| 2 | Cluster stories and attach HN as signal | High | Medium | Done |
+| 3 | Real citations + excerpts in the writer | High | Medium | Done |
+| 4 | Store place on the story | High | Medium | Done |
+| 5 | Paywall-aware link check + source failure Telegram | High | Low | Paywall 401/403 done. Telegram still does not alert when a source feed dies |
+| 6 | Approve only after checks pass | High | Low | Done |
 | 7 | One compile transaction; env wins for publish mode | Medium | Low | Safer ops on Railway |
 | 8 | Wire one email provider or hide Subscribe | Medium | Medium | Signup is honest only if mail exists |
 | 9 | Compile Tuesday 06:00 HKT, remind until 08:00 | Medium | Low | Fewer missed Monday-night stories |
@@ -230,12 +201,10 @@ Do not spend time on X ingest, embeddings, or auto-publish tuning before Week 1 
 
 ## Recommended order of work
 
-1. **Finish Railway setup** (no code): Postgres with pgvector or a migrate that does not need it, env vars, migrate, seed sources, Telegram webhook, Anthropic key, ingest cron, compile cron. Confirm `/api/health` and a `--mock` compile in that database.
-2. **Lock the dangerous edges** (C1, C2, H3, H9): no silent mock, no overwrite of a live week, no approve on failed checks, env kill switch actually works.
-3. **Make selection honest** (H1, H2, H4, H7): citations, HN, clustering, paywall links.
-4. **Make place and voice real** (H5, H6): stored place, excerpts in the prompt, Fabio edits if needed.
-5. **Reader polish** (M4, M7, L4): footer, favicon, Subscribe honesty, skip link.
-6. **Only then** consider email send, Tuesday compile time, and (much later) auto-publish.
+1. **Finish Railway setup** (no code): Postgres with pgvector or a migrate that does not need it, env vars, migrate (now includes `place`), seed sources, Telegram webhook, Anthropic key, ingest cron, compile cron. Confirm `/api/health` and a `--mock` compile in that database.
+2. **Still open:** env kill switch vs database settings (H9), compile as one transaction (H10), source-failure Telegram (rest of opportunity 5).
+3. **Reader polish** (M4, M7, L4): footer, favicon, Subscribe honesty, skip link.
+4. **Only then** consider email send, Tuesday compile time, and (much later) auto-publish.
 
 ## Cost
 
@@ -278,19 +247,21 @@ Build/start: `package.json` `build` / `start` are fine. Docker builds Next, then
 | --- | --- |
 | Weekly, 5–7 stories, Tuesday 08:00 Hong Kong | Compile is Monday 18:00; send time is stored, not sent; email send does not exist |
 | Starts at Week 1, no Edge archive | Week numbers start at 1; old `/post` URLs go to `/archive`; `posts_archive` table still exists unused |
-| Short hand-picked list (~11) plus HN as signal | `data/sources.csv` matches that list; HN is signal-only in ranking, but ingest/citation bugs undermine it |
-| Stronger editorial voice | Prompt asks for a take; mock copy is generic; live writer has no article text |
-| Localised by place | Keyword guess + leftover Asia fields |
-| Generated SVG covers, deterministic | Yes, from seed + guessed region; leftover Web3/Fintech/Energy icons |
+| Short hand-picked list (~11) plus HN as signal | `data/sources.csv` matches that list; HN now attaches to the official story |
+| Stronger editorial voice | Prompt gets excerpt, URL, date, and a real second source when one exists |
+| Localised by place | Stored `place` from the source region; covers and badges read that field |
+| Generated SVG covers, deterministic | Yes, from seed + stored place; leftover Web3/Fintech/Energy icons remain |
 | Magazine UI | Featured lead, card grid, sticky Subscribe, signup band, story rail: present |
 | About never explains the stack | About page is clean; footer still says “Powered by Anthropic” |
-| Fabio approves on Telegram; auto is a later kill-switched path | Buttons exist; auto thresholds exist; several safety holes above |
+| Fabio approves on Telegram; auto is a later kill-switched path | Approve requires a passing eval; failed checks hide the Approve button |
 | Portable to Vercel | Pages read Postgres; no Vercel-only APIs. Cron must stay off the web process |
 
-## Small fixes in this PR
+## Changes in this PR
 
-- Renamed package and health service from `edge-weekly` to `meridian`.
-- Local file-database default and `.env.example` now use `meridian` instead of `edge-weekly` / `edge_weekly`.
-- Admin compile Telegram list now uses real headlines, not the style-check string `ok`.
-
-No other behaviour was changed on purpose. Tests and production build should still pass.
+- Leftover `edge-weekly` names renamed to `meridian`.
+- Admin compile Telegram list uses real headlines.
+- Live weeks cannot be overwritten without `--force`; real compiles require `ANTHROPIC_API_KEY`.
+- Hacker News is a signal on the official story; the same launch is one clustered story.
+- Writer gets excerpts and only a genuine second outlet.
+- Each story stores `place`; badges and covers no longer guess from keywords.
+- Paywalled 401/403 no longer fail a story; Approve cannot skip a failed check.

@@ -9,6 +9,7 @@ export type CitationInput = {
   publishedAt?: Date | null
   isSignal?: boolean
   domain?: string
+  isPaywalled?: boolean
 }
 
 export type StoryInput = {
@@ -17,6 +18,7 @@ export type StoryInput = {
   whyItMatters: string
   asiaAngle?: string | null
   isAsia?: boolean
+  place?: string
   citations: CitationInput[]
 }
 
@@ -137,6 +139,9 @@ export async function checkLinksResolve(
         headers: { 'User-Agent': 'Meridian/1.0' },
         signal: AbortSignal.timeout(8000),
       })
+      if (isPaywallProtectedStatus(response.status, citation.isPaywalled)) {
+        continue
+      }
       if (response.status < 200 || response.status >= 400) {
         problems.push(`${citation.url} returned ${response.status}`)
       }
@@ -180,6 +185,16 @@ export async function runBlockingChecks(
     results,
     surviving,
   }
+}
+
+export function sourceIsPaywalled(paywall: string | null | undefined): boolean {
+  if (!paywall) return false
+  const value = paywall.toLowerCase().trim()
+  return value === 'yes' || value.startsWith('partial') || value === 'freemium'
+}
+
+export function isPaywallProtectedStatus(status: number, isPaywalled?: boolean): boolean {
+  return Boolean(isPaywalled) && (status === 401 || status === 403)
 }
 
 function safeHost(raw: string): string | null {

@@ -1,19 +1,24 @@
 import type { EditionStoryView, EditionView } from '@/lib/queries/editions'
 import type { StoryCardModel } from '@/components/story-card'
-import { inferRegion, inferTheme, readingMinutes } from '@/lib/story-meta'
+import { isStoredPlace } from '@/lib/pipeline/place'
+import { inferTheme, readingMinutes, type StoryRegion } from '@/lib/story-meta'
+
+export function storedPlace(story: Pick<EditionStoryView, 'place'>): StoryRegion {
+  return isStoredPlace(story.place) ? story.place : 'Global'
+}
 
 export function toStoryCard(
   edition: EditionView,
   story: EditionStoryView,
 ): StoryCardModel {
-  const theme = inferTheme('AI', story.headline, story.body, story.asiaAngle)
-  const region = inferRegion(story.headline, story.body, story.asiaAngle, story.isAsia ? 'Asia' : '')
+  const theme = inferTheme('AI')
+  const region = storedPlace(story)
   return {
     href: `/editions/${edition.editionWeek}/${story.slug}`,
     title: story.headline,
     standfirst: story.whyItMatters,
     date: edition.publishedAt,
-    minutes: readingMinutes(story.body, story.whyItMatters, story.asiaAngle),
+    minutes: readingMinutes(story.body, story.whyItMatters),
     theme,
     region,
     seed: story.slug,

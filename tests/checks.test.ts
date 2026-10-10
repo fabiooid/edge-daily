@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   checkEditionShape,
   checkFreshness,
+  checkLinksResolve,
   checkSourceFloor,
   checkStyle,
+  isPaywallProtectedStatus,
+  sourceIsPaywalled,
 } from '../src/lib/pipeline/checks'
 import { freshnessWindow } from '../src/lib/pipeline/window'
 
@@ -84,5 +87,29 @@ describe('blocking checks', () => {
     expect(short.passed).toBe(false)
     expect(short.detail).toMatch(/only 2 stories/)
     expect(short.detail).not.toMatch(/Asia/)
+  })
+
+  it('treats 401/403 as ok only for a paywalled source', () => {
+    expect(sourceIsPaywalled('partial')).toBe(true)
+    expect(sourceIsPaywalled('freemium')).toBe(true)
+    expect(sourceIsPaywalled('no')).toBe(false)
+    expect(isPaywallProtectedStatus(403, true)).toBe(true)
+    expect(isPaywallProtectedStatus(401, true)).toBe(true)
+    expect(isPaywallProtectedStatus(404, true)).toBe(false)
+    expect(isPaywallProtectedStatus(403, false)).toBe(false)
+  })
+
+  it('does not fail a paywalled citation on 403', async () => {
+    const original = globalThis.fetch
+    globalThis.fetch = (async () => new Response('paywall', { status: 403 })) as typeof fetch
+    try {
+      const result = await checkLinksResolve({
+        ...goodStory,
+        citations: [{ ...goodStory.citations[0], isPaywalled: true }],
+      })
+      expect(result.passed).toBe(true)
+    } finally {
+      globalThis.fetch = original
+    }
   })
 })

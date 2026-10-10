@@ -100,6 +100,7 @@ export const editionStories = pgTable(
     position: integer('position').notNull(),
     section: text('section').notNull().default('main'),
     isAsia: boolean('is_asia').notNull().default(false),
+    place: text('place').notNull().default('Global'),
     slug: text('slug').notNull(),
     headline: text('headline').notNull(),
     body: text('body').notNull(),

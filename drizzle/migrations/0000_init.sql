@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS edition_stories (
   position integer NOT NULL,
   section text NOT NULL DEFAULT 'main',
   is_asia boolean NOT NULL DEFAULT false,
+  place text NOT NULL DEFAULT 'Global',
   slug text NOT NULL,
   headline text NOT NULL,
   body text NOT NULL,

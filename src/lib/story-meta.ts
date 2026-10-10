@@ -1,3 +1,5 @@
+import { placeFromSourceRegion } from './pipeline/place'
+
 export type StoryTheme = 'AI' | 'Web3' | 'Fintech' | 'Energy'
 
 export type StoryRegion =
@@ -18,35 +20,9 @@ export type StoryRegion =
   | 'Middle East'
   | 'Global'
 
-const REGION_MATCHERS: { region: StoryRegion; needles: string[] }[] = [
-  { region: 'Hong Kong', needles: ['hong kong', 'hongkong', 'hkt', 'hkma'] },
-  { region: 'Singapore', needles: ['singapore', 'mas '] },
-  { region: 'Taiwan', needles: ['taiwan', 'taipei'] },
-  { region: 'Korea', needles: ['korea', 'korean', 'seoul'] },
-  { region: 'Japan', needles: ['japan', 'japanese', 'tokyo'] },
-  { region: 'India', needles: ['india', 'indian', 'mumbai', 'bengaluru', 'delhi'] },
-  {
-    region: 'Southeast Asia',
-    needles: ['southeast asia', 'south-east asia', 'asean', 'indonesia', 'vietnam', 'thailand', 'malaysia', 'philippines', 'jakarta'],
-  },
-  { region: 'China', needles: ['china', 'chinese', 'beijing', 'shanghai', 'shenzhen', 'deepseek', 'alibaba', 'tencent', 'bytedance'] },
-  { region: 'United Kingdom', needles: ['united kingdom', 'britain', 'london', 'uk government', 'uk regulator'] },
-  { region: 'Europe', needles: ['european union', 'eu ai act', 'brussels', 'europe', 'european'] },
-  { region: 'United States', needles: ['united states', 'u.s.', 'usa', 'washington', 'white house', 'silicon valley'] },
-  { region: 'Africa', needles: ['africa', 'african', 'nigeria', 'kenya', 'south africa'] },
-  { region: 'Latin America', needles: ['latin america', 'brazil', 'mexico', 'argentina'] },
-  { region: 'Middle East', needles: ['middle east', 'uae', 'saudi', 'israel', 'dubai'] },
-  { region: 'Asia', needles: ['asia', 'asian'] },
-]
-
+/** @deprecated Use a stored story.place. This only maps a source region string. */
 export function inferRegion(...parts: Array<string | null | undefined>): StoryRegion {
-  const text = parts.filter(Boolean).join(' ').toLowerCase()
-  for (const matcher of REGION_MATCHERS) {
-    if (matcher.needles.some((needle) => text.includes(needle))) {
-      return matcher.region
-    }
-  }
-  return 'Global'
+  return placeFromSourceRegion(parts.find((part) => part && part.trim()) || '')
 }
 
 export function inferTheme(theme?: string | null, ...parts: Array<string | null | undefined>): StoryTheme {
