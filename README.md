@@ -174,7 +174,7 @@ There is no Vercel-only cache or image API in this app. Pages render from Postgr
 
 ## Optional: GitHub Actions cron
 
-`.github/workflows/pipeline.example.yml` is a manual alternative. It has no schedule. Railway cron is the one that should run every week.
+`docs/examples/pipeline.github-actions.yml` is a manual alternative you can copy into `.github/workflows/` if you want. It has no schedule. Railway cron is the one that should run every week.
 
 ## Project layout
 
